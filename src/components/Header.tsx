@@ -14,7 +14,7 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center space-x-2 transition-transform hover:scale-105">
           <Leaf className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold text-foreground">EcoTrack</span>
+          <span className="text-xl font-bold text-foreground">Clever Reduction</span>
         </Link>
 
         <nav className="hidden md:flex items-center space-x-8">

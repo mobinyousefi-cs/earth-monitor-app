@@ -6,7 +6,7 @@ const About = () => {
     <div className="min-h-screen bg-background py-16">
       <div className="container space-y-16">
         <div className="text-center space-y-4 animate-fade-in">
-          <h1 className="text-4xl lg:text-6xl font-bold">About EcoTrack</h1>
+          <h1 className="text-4xl lg:text-6xl font-bold">About Clever Reduction</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Empowering individuals and organizations to understand and reduce their environmental impact
           </p>
@@ -23,15 +23,15 @@ const About = () => {
             </CardHeader>
             <CardContent className="space-y-4 text-lg text-muted-foreground">
               <p>
-                EcoTrack was founded with a simple yet powerful vision: to make carbon footprint tracking 
-                accessible, understandable, and actionable for everyone. We believe that awareness is the 
-                first step toward meaningful change.
+                Clever Reduction was founded with a simple yet powerful vision: to make carbon footprint 
+                calculation and reduction accessible and actionable for businesses and individuals. We believe 
+                that expert guidance is essential for meaningful environmental change.
               </p>
               <p>
-                Our mission is to provide accurate, real-time data and insights that help individuals, 
-                businesses, and governments make informed decisions about their environmental impact. 
-                By democratizing access to carbon footprint information, we're building a more sustainable 
-                future together.
+                Our mission is to provide professional consulting services that help organizations measure, 
+                understand, and reduce their carbon footprint. Through personalized strategies and ongoing 
+                support, we empower our clients to make data-driven decisions that create lasting environmental 
+                impact while improving operational efficiency.
               </p>
             </CardContent>
           </Card>

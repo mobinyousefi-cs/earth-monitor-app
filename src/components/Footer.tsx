@@ -7,13 +7,13 @@ const Footer = () => {
         <div className="flex flex-col items-center justify-center space-y-4">
           <div className="flex items-center space-x-2">
             <Leaf className="h-5 w-5 text-primary" />
-            <span className="text-lg font-semibold text-card-foreground">EcoTrack</span>
+            <span className="text-lg font-semibold text-card-foreground">Clever Reduction</span>
           </div>
           <p className="text-sm text-muted-foreground text-center">
-            Tracking carbon footprints for a sustainable future
+            Carbon footprint calculation and consulting for a sustainable future
           </p>
           <p className="text-xs text-muted-foreground">
-            © 2025 EcoTrack. All rights reserved.
+            © 2025 Clever Reduction. All rights reserved.
           </p>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ interface BlogPost {
   comments: Comment[];
 }
 
-const blogPosts: BlogPost[] = [
+const defaultPosts: BlogPost[] = [
   {
     id: 1,
     title: "The Rise of Renewable Energy",
@@ -70,9 +70,24 @@ const blogPosts: BlogPost[] = [
 ];
 
 const Blog = () => {
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(defaultPosts);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [newComment, setNewComment] = useState({ name: "", text: "" });
   const { toast } = useToast();
+
+  // Load posts from localStorage on mount
+  useEffect(() => {
+    const savedPosts = localStorage.getItem("blogPosts");
+    if (savedPosts) {
+      try {
+        const parsed = JSON.parse(savedPosts);
+        setBlogPosts(parsed.length > 0 ? parsed : defaultPosts);
+      } catch (error) {
+        console.error("Error loading posts:", error);
+        setBlogPosts(defaultPosts);
+      }
+    }
+  }, []);
 
   const handleCommentSubmit = (postId: number) => {
     if (!newComment.name.trim() || !newComment.text.trim()) {
