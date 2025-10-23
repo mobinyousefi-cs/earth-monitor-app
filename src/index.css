@@ -97,3 +97,38 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* React Quill Custom Styles */
+.rich-text-editor .ql-toolbar {
+  @apply border border-input rounded-t-lg bg-muted/50;
+}
+
+.rich-text-editor .ql-container {
+  @apply border border-input rounded-b-lg;
+  min-height: 300px;
+}
+
+.rich-text-editor .ql-editor {
+  @apply text-foreground;
+  min-height: 300px;
+}
+
+.rich-text-editor .ql-editor.ql-blank::before {
+  @apply text-muted-foreground;
+}
+
+.dark .rich-text-editor .ql-stroke {
+  @apply stroke-foreground;
+}
+
+.dark .rich-text-editor .ql-fill {
+  @apply fill-foreground;
+}
+
+.dark .rich-text-editor .ql-picker-label {
+  @apply text-foreground;
+}
+
+.dark .rich-text-editor .ql-picker-options {
+  @apply bg-popover text-popover-foreground border-border;
+}
