@@ -1,4 +1,4 @@
-import { Leaf } from "lucide-react";
+import logo from "@/assets/clever-reduction-logo.png";
 
 const Footer = () => {
   return (
@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="container py-8">
         <div className="flex flex-col items-center justify-center space-y-4">
           <div className="flex items-center space-x-2">
-            <Leaf className="h-5 w-5 text-primary" />
+            <img src={logo} alt="Clever Reduction" className="h-6 w-6" />
             <span className="text-lg font-semibold text-card-foreground">Clever Reduction</span>
           </div>
           <p className="text-sm text-muted-foreground text-center">
