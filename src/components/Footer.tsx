@@ -1,3 +1,4 @@
+import React from "react";
 import { Link } from "react-router-dom";
 import { Facebook, Twitter, Linkedin, Youtube, Mail, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";

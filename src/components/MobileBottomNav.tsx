@@ -1,3 +1,4 @@
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, Calculator, LayoutDashboard, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
