@@ -13,8 +13,8 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
     () => ({
       toolbar: [
         [{ header: [1, 2, 3, 4, 5, 6, false] }],
-        [{ font: [] }],
-        [{ size: ["small", false, "large", "huge"] }],
+        [{ font: ['inter', 'poppins', 'roboto', 'playfair', 'montserrat', 'sans-serif', 'serif', 'monospace'] }],
+        [{ size: ['8', '10', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48', '64'] }],
         ["bold", "italic", "underline", "strike"],
         [{ color: [] }, { background: [] }],
         [{ list: "ordered" }, { list: "bullet" }],

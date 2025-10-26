@@ -267,10 +267,14 @@ const AdminDashboard = () => {
 
       <div className="container py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+          <TabsList className="grid w-full grid-cols-5 lg:w-[750px]">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               Overview
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              Analytics
             </TabsTrigger>
             <TabsTrigger value="posts" className="gap-2">
               <FileText className="h-4 w-4" />
@@ -342,6 +346,142 @@ const AdminDashboard = () => {
                   {posts.length === 0 && (
                     <p className="text-center text-muted-foreground py-8">No posts yet. Create your first post!</p>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Visitor Analytics</h2>
+              <p className="text-muted-foreground">Track visitor behavior and site engagement</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Visitors</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">12,458</div>
+                  <p className="text-xs text-muted-foreground mt-1">+12.5% from last month</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Page Views</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">45,231</div>
+                  <p className="text-xs text-muted-foreground mt-1">+8.2% from last month</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Duration</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">3m 24s</div>
+                  <p className="text-xs text-muted-foreground mt-1">+0.5% from last month</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Bounce Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">42.3%</div>
+                  <p className="text-xs text-muted-foreground mt-1">-3.1% from last month</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Pages</CardTitle>
+                  <CardDescription>Most visited pages this month</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { page: '/home', visits: 8450, duration: '4m 12s' },
+                      { page: '/blog', visits: 6230, duration: '5m 48s' },
+                      { page: '/pricing', visits: 4890, duration: '2m 35s' },
+                      { page: '/calculate', visits: 3670, duration: '3m 22s' },
+                      { page: '/about', visits: 2980, duration: '2m 10s' },
+                    ].map((item, index) => (
+                      <div key={index} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
+                        <div className="flex-1">
+                          <p className="font-medium">{item.page}</p>
+                          <p className="text-sm text-muted-foreground">{item.visits.toLocaleString()} visits</p>
+                        </div>
+                        <div className="text-sm text-muted-foreground">{item.duration}</div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Visitor Locations</CardTitle>
+                  <CardDescription>Top regions by visitor count</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { city: 'New York', region: 'United States', visitors: 2845, percentage: 22.8 },
+                      { city: 'London', region: 'United Kingdom', visitors: 1920, percentage: 15.4 },
+                      { city: 'Berlin', region: 'Germany', visitors: 1560, percentage: 12.5 },
+                      { city: 'Toronto', region: 'Canada', visitors: 1340, percentage: 10.8 },
+                      { city: 'Sydney', region: 'Australia', visitors: 980, percentage: 7.9 },
+                    ].map((item, index) => (
+                      <div key={index} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
+                        <div className="flex-1">
+                          <p className="font-medium">{item.city}</p>
+                          <p className="text-sm text-muted-foreground">{item.region}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">{item.visitors.toLocaleString()}</p>
+                          <p className="text-sm text-muted-foreground">{item.percentage}%</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Visitor Activity</CardTitle>
+                <CardDescription>Real-time visitor sessions and engagement</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[
+                    { id: 1, page: '/blog', city: 'San Francisco', region: 'USA', duration: '5m 32s', timestamp: '2 minutes ago' },
+                    { id: 2, page: '/pricing', city: 'Paris', region: 'France', duration: '3m 18s', timestamp: '5 minutes ago' },
+                    { id: 3, page: '/home', city: 'Tokyo', region: 'Japan', duration: '2m 45s', timestamp: '8 minutes ago' },
+                    { id: 4, page: '/calculate', city: 'Mumbai', region: 'India', duration: '4m 12s', timestamp: '12 minutes ago' },
+                    { id: 5, page: '/about', city: 'São Paulo', region: 'Brazil', duration: '1m 58s', timestamp: '15 minutes ago' },
+                    { id: 6, page: '/blog', city: 'Amsterdam', region: 'Netherlands', duration: '6m 22s', timestamp: '18 minutes ago' },
+                  ].map((activity) => (
+                    <div key={activity.id} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{activity.page}</p>
+                          <Badge variant="outline" className="text-xs">{activity.duration}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {activity.city}, {activity.region}
+                        </p>
+                      </div>
+                      <div className="text-sm text-muted-foreground">{activity.timestamp}</div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -556,6 +696,7 @@ const AdminDashboard = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="image">Featured Image *</Label>
+                    <p className="text-sm text-muted-foreground">Recommended size: 1200x630px (16:9 aspect ratio) for optimal display across all devices</p>
                     <div className="space-y-3">
                       <div>
                         <Label htmlFor="image-upload" className="text-sm text-muted-foreground">Upload Image</Label>
@@ -634,6 +775,9 @@ const AdminDashboard = () => {
                       {showPreview ? "Hide Preview" : "Show Preview"}
                     </Button>
                   </div>
+                  <CardDescription>
+                    For in-text images: Recommended size is 800x450px (16:9) or 800x600px (4:3). Maximum width of 1200px for best performance.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {!showPreview ? (
