@@ -28,46 +28,7 @@ interface BlogPost {
   comments: Comment[];
 }
 
-const defaultPosts: BlogPost[] = [
-  {
-    id: 1,
-    title: "The Rise of Renewable Energy",
-    excerpt: "How solar and wind power are transforming our energy landscape and reducing global carbon emissions.",
-    content: "Renewable energy sources have seen unprecedented growth over the past decade. Solar and wind power installations have increased by over 300%, making clean energy more accessible and affordable than ever before. This transition is crucial in our fight against climate change.",
-    image: renewableImage,
-    date: "March 15, 2025",
-    author: "Sarah Johnson",
-    comments: [
-      { id: 1, author: "Mike Chen", text: "Great article! I've installed solar panels on my home last year and the savings are incredible.", date: "March 16, 2025" },
-      { id: 2, author: "Emma Wilson", text: "This gives me hope for the future. We need more investments in renewable infrastructure.", date: "March 17, 2025" }
-    ]
-  },
-  {
-    id: 2,
-    title: "Sustainable Transportation Choices",
-    excerpt: "Exploring eco-friendly alternatives to reduce your daily commute's carbon footprint.",
-    content: "Transportation accounts for nearly 29% of global greenhouse gas emissions. By choosing sustainable options like cycling, public transit, or electric vehicles, individuals can significantly reduce their environmental impact. Even small changes in daily habits can create meaningful differences.",
-    image: cyclingImage,
-    date: "March 10, 2025",
-    author: "David Martinez",
-    comments: [
-      { id: 1, author: "Lisa Anderson", text: "I've been cycling to work for 6 months now. Not only am I reducing emissions, but I feel healthier too!", date: "March 11, 2025" }
-    ]
-  },
-  {
-    id: 3,
-    title: "Community Action for Climate Change",
-    excerpt: "How local initiatives are making a global impact on carbon reduction efforts.",
-    content: "Communities around the world are taking action against climate change through tree-planting campaigns, local renewable energy projects, and sustainable agriculture. These grassroots movements demonstrate that collective action at the local level can drive significant environmental change.",
-    image: communityImage,
-    date: "March 5, 2025",
-    author: "Rachel Green",
-    comments: [
-      { id: 1, author: "Tom Harris", text: "Our neighborhood started a community garden last month. It's amazing how much we can accomplish together!", date: "March 6, 2025" },
-      { id: 2, author: "Sophie Lee", text: "I'd love to see more articles about local initiatives. They're so inspiring!", date: "March 7, 2025" }
-    ]
-  }
-];
+const defaultPosts: BlogPost[] = [];
 
 const Blog = () => {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(defaultPosts);

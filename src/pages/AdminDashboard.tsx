@@ -555,15 +555,55 @@ const AdminDashboard = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="image">Featured Image URL *</Label>
-                    <Input
-                      id="image"
-                      type="url"
-                      placeholder="https://example.com/image.jpg"
-                      value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                      required
-                    />
+                    <Label htmlFor="image">Featured Image *</Label>
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="image-upload" className="text-sm text-muted-foreground">Upload Image</Label>
+                        <Input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setFormData({ ...formData, image: reader.result as string });
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="cursor-pointer"
+                        />
+                      </div>
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">Or use URL</span>
+                        </div>
+                      </div>
+                      <div>
+                        <Input
+                          id="image-url"
+                          type="url"
+                          placeholder="https://example.com/image.jpg"
+                          value={formData.image.startsWith('data:') ? '' : formData.image}
+                          onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                        />
+                      </div>
+                      {formData.image && (
+                        <div className="mt-3">
+                          <Label className="text-sm text-muted-foreground mb-2 block">Preview</Label>
+                          <img 
+                            src={formData.image} 
+                            alt="Preview" 
+                            className="w-full max-w-xs h-48 object-cover rounded-lg border"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2">

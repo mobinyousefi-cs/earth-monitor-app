@@ -75,35 +75,6 @@ const Header = () => {
 
   return (
     <>
-      {/* Top Utility Bar */}
-      <div className="hidden lg:block bg-secondary text-secondary-foreground">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-end h-10 text-sm">
-            <div className="flex items-center gap-6">
-              <Link to="/pricing" className="hover:text-primary-foreground transition-colors">
-                Pricing
-              </Link>
-              <Link to="/contact-sales" className="hover:text-primary-foreground transition-colors">
-                Contact Sales
-              </Link>
-              <button className="flex items-center gap-1 hover:text-primary-foreground transition-colors">
-                <Globe className="h-4 w-4" />
-                EN
-              </button>
-              <div className="h-4 w-px bg-secondary-foreground/30" />
-              <Link to="/sign-in" className="hover:text-primary-foreground transition-colors">
-                Sign In
-              </Link>
-              <Link to="/sign-up">
-                <Button size="sm" variant="outline" className="h-7 bg-transparent border-secondary-foreground/30 text-secondary-foreground hover:bg-secondary-foreground/10">
-                  Create Account
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4">
@@ -137,6 +108,13 @@ const Header = () => {
                         ))}
                       </div>
                     </NavigationMenuContent>
+                  </NavigationMenuItem>
+
+                  {/* Pricing */}
+                  <NavigationMenuItem>
+                    <Link to="/pricing" className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
+                      Pricing
+                    </Link>
                   </NavigationMenuItem>
 
                   {/* Solutions */}
