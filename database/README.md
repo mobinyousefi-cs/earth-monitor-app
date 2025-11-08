@@ -64,9 +64,10 @@ DATABASE_URL=postgresql://username:password@localhost:5432/clever_reduction
 
 ### Database Tables
 
-#### Authentication
-- `admin_users` - Admin user accounts
-- `user_roles` - User role assignments
+#### Authentication & Authorization
+- `admin_users` - Admin user accounts with bcrypt password hashing
+- `user_roles` - Role assignments (admin, editor, viewer) in separate table for security
+- Security functions: `has_role()`, `is_admin()` for role checking without RLS recursion
 
 #### Blog System
 - `blog_posts` - Blog articles
@@ -83,15 +84,34 @@ DATABASE_URL=postgresql://username:password@localhost:5432/clever_reduction
 
 ### Security Notes
 
-⚠️ **CRITICAL**: The default admin password in the schema is `admin123`. 
+⚠️ **CRITICAL SECURITY REQUIREMENTS**:
 
-**You MUST change this immediately!**
+1. **Change Default Password**: The default admin password is `admin123`. Change immediately!
+   ```javascript
+   const bcrypt = require('bcrypt');
+   const hash = await bcrypt.hash('your-secure-password', 10);
+   ```
 
-Generate a new bcrypt hash:
-```javascript
-const bcrypt = require('bcrypt');
-const hash = await bcrypt.hash('your-secure-password', 10);
-```
+2. **Role-Based Access Control**: 
+   - Roles are stored in a separate `user_roles` table (NEVER on user profiles)
+   - Use `has_role()` and `is_admin()` security definer functions to check permissions
+   - These functions prevent recursive RLS policy issues
+
+3. **Main Admin Protection**:
+   - The main admin account cannot be deleted (database trigger enforced)
+   - Only main admins should be able to create other admins
+
+4. **Row Level Security (RLS)**:
+   - All tables should have RLS enabled
+   - Use the security definer functions in your RLS policies
+   
+   Example policy:
+   ```sql
+   CREATE POLICY "Only admins can manage users"
+   ON admin_users FOR ALL
+   TO authenticated
+   USING (public.is_admin(auth.uid()));
+   ```
 
 ### Backend Integration Required
 

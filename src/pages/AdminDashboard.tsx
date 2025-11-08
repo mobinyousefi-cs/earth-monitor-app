@@ -21,7 +21,9 @@ import {
   Eye,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Users,
+  Shield
 } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
@@ -49,6 +51,15 @@ interface BlogPost {
   comments: Comment[];
 }
 
+interface AdminUser {
+  id: string;
+  email: string;
+  fullName: string;
+  role: "admin" | "editor" | "viewer";
+  createdAt: string;
+  isMainAdmin: boolean;
+}
+
 const AdminDashboard = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -58,6 +69,8 @@ const AdminDashboard = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("overview");
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
+  const [newAdmin, setNewAdmin] = useState({ email: "", fullName: "", role: "editor" as "admin" | "editor" | "viewer", password: "" });
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     title: string;
@@ -96,6 +109,23 @@ const AdminDashboard = () => {
     const savedPosts = localStorage.getItem("blogPosts");
     if (savedPosts) {
       setPosts(JSON.parse(savedPosts));
+    }
+
+    const savedAdmins = localStorage.getItem("adminUsers");
+    if (savedAdmins) {
+      setAdmins(JSON.parse(savedAdmins));
+    } else {
+      // Initialize with main admin
+      const mainAdmin: AdminUser = {
+        id: "1",
+        email: "admin@cleverreduction.com",
+        fullName: "Main Admin",
+        role: "admin",
+        createdAt: new Date().toISOString(),
+        isMainAdmin: true
+      };
+      setAdmins([mainAdmin]);
+      localStorage.setItem("adminUsers", JSON.stringify([mainAdmin]));
     }
   }, [navigate]);
 
@@ -175,6 +205,69 @@ const AdminDashboard = () => {
         toast({
           title: "Post Deleted",
           description: "The blog post has been deleted"
+        });
+        setConfirmDialog({ ...confirmDialog, open: false });
+      }
+    });
+  };
+
+  const handleAddAdmin = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (admins.some(admin => admin.email === newAdmin.email)) {
+      toast({
+        title: "Error",
+        description: "An admin with this email already exists",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const admin: AdminUser = {
+      id: Date.now().toString(),
+      email: newAdmin.email,
+      fullName: newAdmin.fullName,
+      role: newAdmin.role,
+      createdAt: new Date().toISOString(),
+      isMainAdmin: false
+    };
+
+    const updatedAdmins = [...admins, admin];
+    setAdmins(updatedAdmins);
+    localStorage.setItem("adminUsers", JSON.stringify(updatedAdmins));
+    
+    toast({
+      title: "Admin Created",
+      description: `${newAdmin.fullName} has been added as ${newAdmin.role}`
+    });
+
+    setNewAdmin({ email: "", fullName: "", role: "editor", password: "" });
+  };
+
+  const handleDeleteAdmin = (id: string) => {
+    const admin = admins.find(a => a.id === id);
+    
+    if (admin?.isMainAdmin) {
+      toast({
+        title: "Cannot Delete",
+        description: "The main admin account cannot be deleted",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setConfirmDialog({
+      open: true,
+      title: "Delete Admin",
+      description: `Are you sure you want to remove ${admin?.fullName} from the admin panel?`,
+      variant: "destructive",
+      onConfirm: () => {
+        const updatedAdmins = admins.filter(a => a.id !== id);
+        setAdmins(updatedAdmins);
+        localStorage.setItem("adminUsers", JSON.stringify(updatedAdmins));
+        toast({
+          title: "Admin Removed",
+          description: "The admin has been removed"
         });
         setConfirmDialog({ ...confirmDialog, open: false });
       }
@@ -267,7 +360,7 @@ const AdminDashboard = () => {
 
       <div className="container py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 lg:w-[1050px]">
+          <TabsList className="grid w-full grid-cols-8 lg:w-[1200px]">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               Overview
@@ -292,6 +385,10 @@ const AdminDashboard = () => {
                   {pendingComments.length}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="admins" className="gap-2">
+              <Users className="h-4 w-4" />
+              Admins
             </TabsTrigger>
             <TabsTrigger value="company" className="gap-2">
               <FileText className="h-4 w-4" />
@@ -905,6 +1002,166 @@ const AdminDashboard = () => {
                 ))
               )}
             </div>
+          </TabsContent>
+
+          {/* Admins Management Tab */}
+          <TabsContent value="admins" className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Admin Management</h2>
+              <p className="text-muted-foreground">Manage admin users and their permissions</p>
+            </div>
+
+            <Card className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-amber-900 dark:text-amber-100 mb-1">Security Notice</p>
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      This is a demo implementation using localStorage. For production use, enable Lovable Cloud for proper authentication with secure password hashing, role-based access control, and database-backed user management.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Create New Admin</CardTitle>
+                  <CardDescription>Add a new administrator to the system</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleAddAdmin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="admin-email">Email *</Label>
+                      <Input
+                        id="admin-email"
+                        type="email"
+                        placeholder="admin@example.com"
+                        value={newAdmin.email}
+                        onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="admin-name">Full Name *</Label>
+                      <Input
+                        id="admin-name"
+                        placeholder="John Doe"
+                        value={newAdmin.fullName}
+                        onChange={(e) => setNewAdmin({ ...newAdmin, fullName: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="admin-password">Password *</Label>
+                      <Input
+                        id="admin-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={newAdmin.password}
+                        onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
+                        required
+                        minLength={8}
+                      />
+                      <p className="text-xs text-muted-foreground">Minimum 8 characters</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="admin-role">Role *</Label>
+                      <Select
+                        value={newAdmin.role}
+                        onValueChange={(value: "admin" | "editor" | "viewer") => setNewAdmin({ ...newAdmin, role: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin - Full access</SelectItem>
+                          <SelectItem value="editor">Editor - Can edit content</SelectItem>
+                          <SelectItem value="viewer">Viewer - Read only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button type="submit" className="w-full">
+                      <Users className="mr-2 h-4 w-4" />
+                      Create Admin
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Admin Roles</CardTitle>
+                  <CardDescription>Understanding permission levels</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                      <Shield className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <p className="font-semibold">Admin</p>
+                        <p className="text-sm text-muted-foreground">Full system access including user management</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                      <Edit className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <p className="font-semibold">Editor</p>
+                        <p className="text-sm text-muted-foreground">Can create and edit content, manage comments</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                      <Eye className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <p className="font-semibold">Viewer</p>
+                        <p className="text-sm text-muted-foreground">Read-only access to analytics and content</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Admins ({admins.length})</CardTitle>
+                <CardDescription>Manage existing admin accounts</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {admins.map((admin) => (
+                    <div key={admin.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold">{admin.fullName}</p>
+                          {admin.isMainAdmin && (
+                            <Badge variant="default" className="text-xs">Main Admin</Badge>
+                          )}
+                          <Badge variant="outline" className="text-xs capitalize">{admin.role}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{admin.email}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Created {new Date(admin.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        {!admin.isMainAdmin && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteAdmin(admin.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Company Pages Tab */}

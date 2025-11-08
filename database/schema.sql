@@ -6,30 +6,80 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create custom types
 CREATE TYPE post_status AS ENUM ('draft', 'published', 'archived');
-CREATE TYPE user_role AS ENUM ('admin', 'editor', 'viewer');
+CREATE TYPE app_role AS ENUM ('admin', 'editor', 'viewer');
 
 -- ============================================
 -- USERS & AUTHENTICATION
 -- ============================================
 
--- Admin users table
+-- Admin users table (linked to auth.users when using Supabase)
 CREATE TABLE admin_users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255),
+    is_main_admin BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- User roles table
+-- User roles table (CRITICAL: Roles must be in separate table for security)
 CREATE TABLE user_roles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES admin_users(id) ON DELETE CASCADE,
-    role user_role NOT NULL,
+    user_id UUID REFERENCES admin_users(id) ON DELETE CASCADE NOT NULL,
+    role app_role NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(user_id, role)
 );
+
+-- ============================================
+-- SECURITY FUNCTIONS
+-- ============================================
+
+-- Security definer function to check user roles (prevents recursive RLS issues)
+CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role app_role)
+RETURNS BOOLEAN
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.user_roles
+    WHERE user_id = _user_id
+      AND role = _role
+  )
+$$;
+
+-- Function to check if user is admin
+CREATE OR REPLACE FUNCTION public.is_admin(_user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT has_role(_user_id, 'admin')
+$$;
+
+-- Prevent main admin deletion
+CREATE OR REPLACE FUNCTION prevent_main_admin_deletion()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF OLD.is_main_admin = true THEN
+    RAISE EXCEPTION 'Cannot delete the main admin account';
+  END IF;
+  RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER prevent_main_admin_delete
+  BEFORE DELETE ON admin_users
+  FOR EACH ROW
+  EXECUTE FUNCTION prevent_main_admin_deletion();
 
 -- ============================================
 -- BLOG SYSTEM
@@ -252,11 +302,22 @@ $$ language 'plpgsql';
 -- SAMPLE DATA (optional)
 -- ============================================
 
--- Insert default admin (password: admin123 - CHANGE THIS!)
+-- Insert main admin (password: admin123 - CHANGE THIS IN PRODUCTION!)
 -- Password hash generated using bcrypt
-INSERT INTO admin_users (email, password_hash, full_name) VALUES 
-    ('admin@cleverreduction.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Admin User');
+INSERT INTO admin_users (email, password_hash, full_name, is_main_admin) VALUES 
+    ('admin@cleverreduction.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Main Admin', true);
 
--- Assign admin role
+-- Assign admin role to main admin
 INSERT INTO user_roles (user_id, role) 
     SELECT id, 'admin' FROM admin_users WHERE email = 'admin@cleverreduction.com';
+
+-- Insert sample editor and viewer accounts
+INSERT INTO admin_users (email, password_hash, full_name, is_main_admin) VALUES 
+    ('editor@cleverreduction.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Content Editor', false),
+    ('viewer@cleverreduction.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Content Viewer', false);
+
+-- Assign roles
+INSERT INTO user_roles (user_id, role)
+SELECT id, 'editor' FROM admin_users WHERE email = 'editor@cleverreduction.com'
+UNION ALL
+SELECT id, 'viewer' FROM admin_users WHERE email = 'viewer@cleverreduction.com';
