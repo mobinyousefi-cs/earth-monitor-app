@@ -267,7 +267,7 @@ const AdminDashboard = () => {
 
       <div className="container py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-[750px]">
+          <TabsList className="grid w-full grid-cols-7 lg:w-[1050px]">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               Overview
@@ -292,6 +292,14 @@ const AdminDashboard = () => {
                   {pendingComments.length}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="company" className="gap-2">
+              <FileText className="h-4 w-4" />
+              Company
+            </TabsTrigger>
+            <TabsTrigger value="resources" className="gap-2">
+              <FileText className="h-4 w-4" />
+              Resources
             </TabsTrigger>
           </TabsList>
 
@@ -896,6 +904,115 @@ const AdminDashboard = () => {
                   </Card>
                 ))
               )}
+            </div>
+          </TabsContent>
+
+          {/* Company Pages Tab */}
+          <TabsContent value="company" className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Company Pages</h2>
+              <p className="text-muted-foreground">Manage content for company section pages</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {[
+                { id: 'careers', title: 'Careers', description: 'Job openings and company culture' },
+                { id: 'contact', title: 'Contact', description: 'Contact information and form' },
+                { id: 'press', title: 'Press & Media', description: 'Press releases and media kit' },
+                { id: 'partners', title: 'Partners', description: 'Partnership information' },
+              ].map((page) => (
+                <Card key={page.id}>
+                  <CardHeader>
+                    <CardTitle>{page.title}</CardTitle>
+                    <CardDescription>{page.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Page Title</Label>
+                      <Input placeholder={`${page.title} page title`} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Content</Label>
+                      <Textarea 
+                        placeholder={`Enter content for ${page.title} page`}
+                        rows={4}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Image URL (optional)</Label>
+                      <Input type="url" placeholder="https://example.com/image.jpg" />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button className="flex-1">Save Changes</Button>
+                      <Button variant="outline">Preview</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Resources Tab */}
+          <TabsContent value="resources" className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Resources Management</h2>
+              <p className="text-muted-foreground">Manage blog and all resource section pages</p>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Blog Posts</CardTitle>
+                <CardDescription>Manage blog content from the Posts and Editor tabs</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{stats.totalPosts} Total Posts</p>
+                    <p className="text-sm text-muted-foreground">{stats.publishedPosts} published, {stats.draftPosts} drafts</p>
+                  </div>
+                  <Button onClick={() => setActiveTab("posts")}>
+                    View Posts
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {[
+                { id: 'webinars', title: 'Webinars', description: 'Upcoming and recorded webinars' },
+                { id: 'guide', title: 'Sustainability Guide', description: 'Best practices and guides' },
+                { id: 'standards', title: 'Carbon Standards', description: 'Industry standards and certifications' },
+                { id: 'case-studies', title: 'Case Studies', description: 'Customer success stories' },
+                { id: 'documentation', title: 'Documentation', description: 'Technical documentation' },
+              ].map((resource) => (
+                <Card key={resource.id}>
+                  <CardHeader>
+                    <CardTitle>{resource.title}</CardTitle>
+                    <CardDescription>{resource.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Page Title</Label>
+                      <Input placeholder={`${resource.title} page title`} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Content</Label>
+                      <Textarea 
+                        placeholder={`Enter content for ${resource.title} page`}
+                        rows={4}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Image URL (optional)</Label>
+                      <Input type="url" placeholder="https://example.com/image.jpg" />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button className="flex-1">Save Changes</Button>
+                      <Button variant="outline">Preview</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </TabsContent>
         </Tabs>

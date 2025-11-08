@@ -156,6 +156,27 @@ VALUES
     );
 
 -- ============================================
+-- COMPANY PAGES SAMPLE DATA
+-- ============================================
+
+INSERT INTO company_pages (page_slug, page_title, content, is_published, meta_title, meta_description) VALUES
+    ('careers', 'Join Our Team', 'We are always looking for talented individuals who are passionate about sustainability and making a positive impact on the environment. Explore our current openings and become part of our mission to reduce carbon emissions globally.', true, 'Careers at Clever Reduction', 'Join our team and help build a sustainable future. Explore career opportunities at Clever Reduction.'),
+    ('contact', 'Contact Us', 'Get in touch with us for any inquiries, support, or partnership opportunities. Our team is here to help you on your sustainability journey.', true, 'Contact Clever Reduction', 'Get in touch with our team. We are here to help with your sustainability goals.'),
+    ('press', 'Press & Media', 'Latest news, press releases, and media resources about Clever Reduction. Download our media kit and stay updated with our latest announcements.', true, 'Press & Media - Clever Reduction', 'Latest news and press releases from Clever Reduction. Media kit and resources available.'),
+    ('partners', 'Our Partners', 'We collaborate with leading organizations worldwide to drive sustainability initiatives and carbon reduction efforts. Learn more about our partnerships and how to become a partner.', true, 'Partners - Clever Reduction', 'Explore our partnerships and collaboration opportunities for sustainable business growth.');
+
+-- ============================================
+-- RESOURCES PAGES SAMPLE DATA
+-- ============================================
+
+INSERT INTO resource_pages (page_slug, page_title, content, is_published, meta_title, meta_description) VALUES
+    ('webinars', 'Sustainability Webinars', 'Join our expert-led webinars to learn about carbon reduction strategies, sustainability best practices, and the latest industry trends. Register for upcoming sessions or watch recordings of past webinars.', true, 'Webinars - Clever Reduction', 'Join expert-led webinars on sustainability and carbon reduction. Learn best practices and industry insights.'),
+    ('guide', 'Sustainability Guide', 'Your comprehensive guide to implementing sustainable practices in your organization. Learn actionable strategies, best practices, and proven methods for reducing your carbon footprint.', true, 'Sustainability Guide - Clever Reduction', 'Comprehensive guide to sustainability and carbon reduction. Actionable strategies for your organization.'),
+    ('standards', 'Carbon Standards & Certifications', 'Understand the major carbon accounting standards, certifications, and frameworks used globally. Learn about GHG Protocol, ISO 14064, Science Based Targets, and more.', true, 'Carbon Standards - Clever Reduction', 'Learn about carbon accounting standards and certifications including GHG Protocol and ISO 14064.'),
+    ('case-studies', 'Customer Success Stories', 'Discover how organizations across different industries are achieving their sustainability goals with Clever Reduction. Real stories, real impact, real results.', true, 'Case Studies - Clever Reduction', 'Customer success stories and real-world examples of carbon reduction achievements.'),
+    ('documentation', 'Technical Documentation', 'Complete technical documentation for developers and technical teams. API references, integration guides, SDKs, and best practices for implementing Clever Reduction in your systems.', true, 'Documentation - Clever Reduction', 'Technical documentation, API references, and integration guides for developers.');
+
+-- ============================================
 -- UPDATE STATISTICS
 -- ============================================
 
@@ -177,13 +198,19 @@ DECLARE
     post_count INT;
     comment_count INT;
     category_count INT;
+    company_count INT;
+    resource_count INT;
 BEGIN
     SELECT COUNT(*) INTO post_count FROM blog_posts;
     SELECT COUNT(*) INTO comment_count FROM blog_comments;
     SELECT COUNT(*) INTO category_count FROM blog_categories;
+    SELECT COUNT(*) INTO company_count FROM company_pages;
+    SELECT COUNT(*) INTO resource_count FROM resource_pages;
     
     RAISE NOTICE 'Seed data inserted successfully!';
     RAISE NOTICE '  - Blog posts: %', post_count;
     RAISE NOTICE '  - Comments: %', comment_count;
     RAISE NOTICE '  - Categories: %', category_count;
+    RAISE NOTICE '  - Company pages: %', company_count;
+    RAISE NOTICE '  - Resource pages: %', resource_count;
 END $$;

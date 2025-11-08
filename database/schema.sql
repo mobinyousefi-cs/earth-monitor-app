@@ -138,6 +138,42 @@ CREATE TABLE contact_submissions (
 );
 
 -- ============================================
+-- COMPANY PAGES
+-- ============================================
+
+-- Company pages content management
+CREATE TABLE company_pages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    page_slug VARCHAR(100) UNIQUE NOT NULL, -- 'careers', 'contact', 'press', 'partners'
+    page_title VARCHAR(255) NOT NULL,
+    content TEXT,
+    image_url TEXT,
+    meta_title VARCHAR(60),
+    meta_description VARCHAR(160),
+    is_published BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
+-- RESOURCES PAGES
+-- ============================================
+
+-- Resources pages content management
+CREATE TABLE resource_pages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    page_slug VARCHAR(100) UNIQUE NOT NULL, -- 'webinars', 'guide', 'standards', 'case-studies', 'documentation'
+    page_title VARCHAR(255) NOT NULL,
+    content TEXT,
+    image_url TEXT,
+    meta_title VARCHAR(60),
+    meta_description VARCHAR(160),
+    is_published BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
 -- INDEXES
 -- ============================================
 
@@ -158,6 +194,12 @@ CREATE INDEX idx_page_views_date ON page_views(viewed_at);
 CREATE INDEX idx_page_views_session ON page_views(session_id);
 CREATE INDEX idx_visitor_sessions_date ON visitor_sessions(started_at);
 
+-- Company and Resources pages indexes
+CREATE INDEX idx_company_pages_slug ON company_pages(page_slug);
+CREATE INDEX idx_company_pages_published ON company_pages(is_published);
+CREATE INDEX idx_resource_pages_slug ON resource_pages(page_slug);
+CREATE INDEX idx_resource_pages_published ON resource_pages(is_published);
+
 -- ============================================
 -- FUNCTIONS & TRIGGERS
 -- ============================================
@@ -175,6 +217,12 @@ CREATE TRIGGER update_blog_posts_updated_at BEFORE UPDATE ON blog_posts
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_admin_users_updated_at BEFORE UPDATE ON admin_users
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_company_pages_updated_at BEFORE UPDATE ON company_pages
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_resource_pages_updated_at BEFORE UPDATE ON resource_pages
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Update search vector for blog posts
