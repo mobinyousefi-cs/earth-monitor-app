@@ -5,50 +5,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   LogOut, 
   FileText, 
-  MessageSquare, 
   LayoutDashboard, 
   Plus, 
-  Edit, 
   Trash2, 
-  Search,
   Eye,
-  CheckCircle,
-  XCircle,
-  Clock,
   Users,
-  Shield
+  Settings,
+  Save,
+  Building2,
+  BookOpen
 } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { StatsCard } from "@/components/admin/StatsCard";
-
-interface Comment {
-  id: string;
-  author: string;
-  email: string;
-  content: string;
-  date: string;
-  status: "pending" | "approved" | "rejected";
-}
+import { toast } from "sonner";
 
 interface BlogPost {
   id: string;
   title: string;
   excerpt: string;
   content: string;
-  image: string;
-  date: string;
   author: string;
+  date: string;
   status: "published" | "draft";
-  category: string;
-  comments: Comment[];
 }
 
 interface AdminUser {
@@ -56,48 +40,75 @@ interface AdminUser {
   email: string;
   fullName: string;
   role: "admin" | "editor" | "viewer";
-  createdAt: string;
   isMainAdmin: boolean;
 }
 
+interface CompanyPage {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+}
+
+const mockPosts: BlogPost[] = [
+  {
+    id: "1",
+    title: "Getting Started with Carbon Tracking",
+    excerpt: "Learn the basics of measuring your company's carbon footprint...",
+    content: "Full content here...",
+    author: "Admin User",
+    date: "2024-03-15",
+    status: "published",
+  },
+  {
+    id: "2",
+    title: "5 Ways to Reduce Emissions in Manufacturing",
+    excerpt: "Practical tips for reducing carbon emissions in industrial settings...",
+    content: "Full content here...",
+    author: "Admin User",
+    date: "2024-03-10",
+    status: "draft",
+  },
+];
+
+const mockCompanyPages: CompanyPage[] = [
+  { id: "1", slug: "careers", title: "Careers", content: "" },
+  { id: "2", slug: "contact", title: "Contact Us", content: "" },
+  { id: "3", slug: "press", title: "Press", content: "" },
+  { id: "4", slug: "partners", title: "Partners", content: "" },
+];
+
+const mockResourcePages: CompanyPage[] = [
+  { id: "1", slug: "webinars", title: "Webinars", content: "" },
+  { id: "2", slug: "guide", title: "Guides", content: "" },
+  { id: "3", slug: "standards", title: "Standards", content: "" },
+  { id: "4", slug: "case-studies", title: "Case Studies", content: "" },
+  { id: "5", slug: "documentation", title: "Documentation", content: "" },
+];
+
 const AdminDashboard = () => {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState("overview");
-  const [admins, setAdmins] = useState<AdminUser[]>([]);
-  const [newAdmin, setNewAdmin] = useState({ email: "", fullName: "", role: "editor" as "admin" | "editor" | "viewer", password: "" });
-  const [confirmDialog, setConfirmDialog] = useState<{
-    open: boolean;
-    title: string;
-    description: string;
-    onConfirm: () => void;
-    variant?: "default" | "destructive";
-  }>({
-    open: false,
-    title: "",
-    description: "",
-    onConfirm: () => {},
-  });
-  
-  const [formData, setFormData] = useState({
-    title: "",
-    excerpt: "",
-    content: "",
-    image: "",
-    author: "",
-    status: "draft" as "published" | "draft",
-    category: "General",
-  });
-
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const [editorContent, setEditorContent] = useState("");
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
+  const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null);
+  
+  const [profileForm, setProfileForm] = useState({
+    fullName: "",
+    email: "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
-  const categories = ["General", "Technology", "Environment", "Lifestyle", "Community", "Tips"];
+  const [newAdminForm, setNewAdminForm] = useState({
+    email: "",
+    fullName: "",
+    role: "viewer" as AdminUser['role'],
+    password: "",
+  });
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [adminToDelete, setAdminToDelete] = useState<AdminUser | null>(null);
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem("adminAuth");
@@ -106,1056 +117,251 @@ const AdminDashboard = () => {
       return;
     }
 
-    const savedPosts = localStorage.getItem("blogPosts");
-    if (savedPosts) {
-      setPosts(JSON.parse(savedPosts));
-    }
-
     const savedAdmins = localStorage.getItem("adminUsers");
     if (savedAdmins) {
-      setAdmins(JSON.parse(savedAdmins));
+      const adminsList = JSON.parse(savedAdmins);
+      setAdmins(adminsList);
+      setCurrentAdmin(adminsList[0]);
+      setProfileForm({
+        fullName: adminsList[0].fullName,
+        email: adminsList[0].email,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
     } else {
-      // Initialize with main admin
       const mainAdmin: AdminUser = {
         id: "1",
         email: "admin@cleverreduction.com",
         fullName: "Main Admin",
         role: "admin",
-        createdAt: new Date().toISOString(),
-        isMainAdmin: true
+        isMainAdmin: true,
       };
       setAdmins([mainAdmin]);
+      setCurrentAdmin(mainAdmin);
+      setProfileForm({
+        fullName: mainAdmin.fullName,
+        email: mainAdmin.email,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
       localStorage.setItem("adminUsers", JSON.stringify([mainAdmin]));
     }
   }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("adminAuth");
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out"
-    });
+    toast.success("Logged out successfully");
     navigate("/admin/login");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleCreateAdmin = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (isEditing && editingId) {
-      const updatedPosts = posts.map(post =>
-        post.id === editingId
-          ? { ...post, ...formData }
-          : post
-      );
-      setPosts(updatedPosts);
-      localStorage.setItem("blogPosts", JSON.stringify(updatedPosts));
-      toast({
-        title: "Post Updated",
-        description: "Your blog post has been successfully updated"
-      });
-    } else {
-      const newPost: BlogPost = {
-        id: Date.now().toString(),
-        ...formData,
-        date: new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric"
-        }),
-        comments: []
-      };
-      const updatedPosts = [newPost, ...posts];
-      setPosts(updatedPosts);
-      localStorage.setItem("blogPosts", JSON.stringify(updatedPosts));
-      toast({
-        title: "Post Created",
-        description: "Your new blog post has been created"
-      });
-    }
-    
-    resetForm();
-    setActiveTab("posts");
-  };
-
-  const handleEdit = (post: BlogPost) => {
-    setFormData({
-      title: post.title,
-      excerpt: post.excerpt,
-      content: post.content,
-      image: post.image,
-      author: post.author,
-      status: post.status,
-      category: post.category,
-    });
-    setIsEditing(true);
-    setEditingId(post.id);
-    setActiveTab("editor");
-  };
-
-  const handleDelete = (id: string) => {
-    setConfirmDialog({
-      open: true,
-      title: "Delete Post",
-      description: "Are you sure you want to delete this post? This action cannot be undone.",
-      variant: "destructive",
-      onConfirm: () => {
-        const updatedPosts = posts.filter(post => post.id !== id);
-        setPosts(updatedPosts);
-        localStorage.setItem("blogPosts", JSON.stringify(updatedPosts));
-        toast({
-          title: "Post Deleted",
-          description: "The blog post has been deleted"
-        });
-        setConfirmDialog({ ...confirmDialog, open: false });
-      }
-    });
-  };
-
-  const handleAddAdmin = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (admins.some(admin => admin.email === newAdmin.email)) {
-      toast({
-        title: "Error",
-        description: "An admin with this email already exists",
-        variant: "destructive"
-      });
+    if (currentAdmin?.role !== 'admin') {
+      toast.error("Only admins can create new administrators");
       return;
     }
 
-    const admin: AdminUser = {
-      id: Date.now().toString(),
-      email: newAdmin.email,
-      fullName: newAdmin.fullName,
-      role: newAdmin.role,
-      createdAt: new Date().toISOString(),
-      isMainAdmin: false
+    const newAdmin: AdminUser = {
+      id: String(admins.length + 1),
+      email: newAdminForm.email,
+      fullName: newAdminForm.fullName,
+      role: newAdminForm.role,
+      isMainAdmin: false,
     };
 
-    const updatedAdmins = [...admins, admin];
+    const updatedAdmins = [...admins, newAdmin];
     setAdmins(updatedAdmins);
     localStorage.setItem("adminUsers", JSON.stringify(updatedAdmins));
-    
-    toast({
-      title: "Admin Created",
-      description: `${newAdmin.fullName} has been added as ${newAdmin.role}`
-    });
-
-    setNewAdmin({ email: "", fullName: "", role: "editor", password: "" });
+    setNewAdminForm({ email: "", fullName: "", role: "viewer", password: "" });
+    toast.success("Admin created successfully");
   };
 
-  const handleDeleteAdmin = (id: string) => {
-    const admin = admins.find(a => a.id === id);
+  const handleDeleteAdmin = () => {
+    if (!adminToDelete) return;
     
-    if (admin?.isMainAdmin) {
-      toast({
-        title: "Cannot Delete",
-        description: "The main admin account cannot be deleted",
-        variant: "destructive"
-      });
+    if (adminToDelete.isMainAdmin) {
+      toast.error("Cannot delete the main admin account");
       return;
     }
 
-    setConfirmDialog({
-      open: true,
-      title: "Delete Admin",
-      description: `Are you sure you want to remove ${admin?.fullName} from the admin panel?`,
-      variant: "destructive",
-      onConfirm: () => {
-        const updatedAdmins = admins.filter(a => a.id !== id);
-        setAdmins(updatedAdmins);
-        localStorage.setItem("adminUsers", JSON.stringify(updatedAdmins));
-        toast({
-          title: "Admin Removed",
-          description: "The admin has been removed"
-        });
-        setConfirmDialog({ ...confirmDialog, open: false });
-      }
-    });
+    const updatedAdmins = admins.filter(admin => admin.id !== adminToDelete.id);
+    setAdmins(updatedAdmins);
+    localStorage.setItem("adminUsers", JSON.stringify(updatedAdmins));
+    setIsDeleteDialogOpen(false);
+    setAdminToDelete(null);
+    toast.success("Admin deleted successfully");
   };
 
-  const handleCommentAction = (postId: string, commentId: string, action: "approve" | "reject" | "delete") => {
-    const updatedPosts = posts.map(post => {
-      if (post.id === postId) {
-        if (action === "delete") {
-          return {
-            ...post,
-            comments: post.comments.filter(c => c.id !== commentId)
-          };
-        } else {
-          return {
-            ...post,
-            comments: post.comments.map(c =>
-              c.id === commentId ? { ...c, status: (action === "approve" ? "approved" : "rejected") as "approved" | "rejected" } : c
-            )
-          };
-        }
-      }
-      return post;
-    });
+  const handleUpdateProfile = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    setPosts(updatedPosts);
-    localStorage.setItem("blogPosts", JSON.stringify(updatedPosts));
-    
-    const actionText = action === "delete" ? "deleted" : action === "approve" ? "approved" : "rejected";
-    toast({
-      title: `Comment ${actionText}`,
-      description: `The comment has been ${actionText}`
-    });
+    if (profileForm.newPassword && profileForm.newPassword !== profileForm.confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    if (profileForm.newPassword && profileForm.newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    toast.success("Profile updated successfully");
+    setProfileForm({ ...profileForm, currentPassword: "", newPassword: "", confirmPassword: "" });
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      excerpt: "",
-      content: "",
-      image: "",
-      author: "",
-      status: "draft",
-      category: "General",
-    });
-    setIsEditing(false);
-    setEditingId(null);
-    setShowPreview(false);
-  };
-
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         post.author.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === "all" || post.status === filterStatus;
-    const matchesCategory = filterCategory === "all" || post.category === filterCategory;
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
-
-  const allComments = posts.flatMap(post => 
-    post.comments.map(comment => ({
-      ...comment,
-      postTitle: post.title,
-      postId: post.id
-    }))
-  );
-
-  const pendingComments = allComments.filter(c => c.status === "pending");
-
-  const stats = {
-    totalPosts: posts.length,
-    publishedPosts: posts.filter(p => p.status === "published").length,
-    draftPosts: posts.filter(p => p.status === "draft").length,
-    pendingComments: pendingComments.length,
-    totalComments: allComments.length,
-    approvedComments: allComments.filter(c => c.status === "approved").length,
+  const mockStats = {
+    totalPosts: 24,
+    publishedPosts: 18,
+    draftPosts: 6,
+    totalViews: 12483,
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card sticky top-0 z-10 shadow-sm">
-        <div className="container flex h-16 items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-          <Button onClick={handleLogout} variant="outline" size="sm">
-            <LogOut className="mr-2 h-4 w-4" />
+    <div className="min-h-screen bg-muted/30">
+      {/* Modern Header */}
+      <header className="border-b bg-card shadow-sm sticky top-0 z-10">
+        <div className="container mx-auto px-6 py-5 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="bg-gradient-to-br from-primary to-primary/70 p-2.5 rounded-xl shadow-md">
+              <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight">Admin Dashboard</h1>
+              <p className="text-xs text-muted-foreground mt-0.5">{currentAdmin?.fullName} • {currentAdmin?.role}</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2 hover:bg-muted">
+            <LogOut className="h-4 w-4" />
             Logout
           </Button>
         </div>
       </header>
 
-      <div className="container py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8 lg:w-[1200px]">
-            <TabsTrigger value="overview" className="gap-2">
+      {/* Main Content */}
+      <main className="container mx-auto px-6 py-8">
+        <Tabs defaultValue="overview" className="space-y-8">
+          <TabsList className="bg-card border shadow-sm p-1.5 h-auto flex-wrap gap-1">
+            <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
               <LayoutDashboard className="h-4 w-4" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2">
-              <LayoutDashboard className="h-4 w-4" />
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="posts" className="gap-2">
+            <TabsTrigger value="posts" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
               <FileText className="h-4 w-4" />
               Posts
             </TabsTrigger>
-            <TabsTrigger value="editor" className="gap-2">
+            <TabsTrigger value="editor" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
               <Plus className="h-4 w-4" />
               Editor
             </TabsTrigger>
-            <TabsTrigger value="comments" className="gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Comments
-              {pendingComments.length > 0 && (
-                <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1">
-                  {pendingComments.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="admins" className="gap-2">
+            <TabsTrigger value="admins" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
               <Users className="h-4 w-4" />
               Admins
             </TabsTrigger>
-            <TabsTrigger value="company" className="gap-2">
-              <FileText className="h-4 w-4" />
+            <TabsTrigger value="profile" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
+              <Settings className="h-4 w-4" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger value="company" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
+              <Building2 className="h-4 w-4" />
               Company
             </TabsTrigger>
-            <TabsTrigger value="resources" className="gap-2">
-              <FileText className="h-4 w-4" />
+            <TabsTrigger value="resources" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
+              <BookOpen className="h-4 w-4" />
               Resources
             </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">Dashboard Overview</h2>
-              <p className="text-muted-foreground">Welcome back! Here's what's happening with your blog.</p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <TabsContent value="overview" className="space-y-8">
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
               <StatsCard
                 title="Total Posts"
-                value={stats.totalPosts}
+                value={mockStats.totalPosts}
+                description="+12% from last month"
                 icon={FileText}
-                description={`${stats.publishedPosts} published, ${stats.draftPosts} drafts`}
               />
               <StatsCard
-                title="Pending Comments"
-                value={stats.pendingComments}
-                icon={Clock}
-                description="Awaiting approval"
+                title="Published"
+                value={mockStats.publishedPosts}
+                description="Live on website"
+                icon={Eye}
               />
               <StatsCard
-                title="Total Comments"
-                value={stats.totalComments}
-                icon={MessageSquare}
-                description={`${stats.approvedComments} approved`}
+                title="Draft Posts"
+                value={mockStats.draftPosts}
+                description="Awaiting review"
+                icon={FileText}
+              />
+              <StatsCard
+                title="Total Views"
+                value={mockStats.totalViews}
+                description="+5% from last week"
+                icon={Eye}
               />
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-                <CardDescription>Latest posts and comments</CardDescription>
+            <Card className="shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <CardTitle className="text-lg">Recent Posts</CardTitle>
+                <CardDescription>Your latest blog posts</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <div className="space-y-4">
-                  {posts.slice(0, 5).map(post => (
-                    <div key={post.id} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
-                      <div>
-                        <p className="font-medium">{post.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {post.date} • {post.author}
-                        </p>
-                      </div>
-                      <Badge variant={post.status === "published" ? "default" : "secondary"}>
-                        {post.status}
-                      </Badge>
-                    </div>
-                  ))}
-                  {posts.length === 0 && (
-                    <p className="text-center text-muted-foreground py-8">No posts yet. Create your first post!</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-6">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">Visitor Analytics</h2>
-              <p className="text-muted-foreground">Track visitor behavior and site engagement</p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Visitors</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">12,458</div>
-                  <p className="text-xs text-muted-foreground mt-1">+12.5% from last month</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Page Views</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">45,231</div>
-                  <p className="text-xs text-muted-foreground mt-1">+8.2% from last month</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Duration</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">3m 24s</div>
-                  <p className="text-xs text-muted-foreground mt-1">+0.5% from last month</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Bounce Rate</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">42.3%</div>
-                  <p className="text-xs text-muted-foreground mt-1">-3.1% from last month</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Top Pages</CardTitle>
-                  <CardDescription>Most visited pages this month</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      { page: '/home', visits: 8450, duration: '4m 12s' },
-                      { page: '/blog', visits: 6230, duration: '5m 48s' },
-                      { page: '/pricing', visits: 4890, duration: '2m 35s' },
-                      { page: '/calculate', visits: 3670, duration: '3m 22s' },
-                      { page: '/about', visits: 2980, duration: '2m 10s' },
-                    ].map((item, index) => (
-                      <div key={index} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
-                        <div className="flex-1">
-                          <p className="font-medium">{item.page}</p>
-                          <p className="text-sm text-muted-foreground">{item.visits.toLocaleString()} visits</p>
-                        </div>
-                        <div className="text-sm text-muted-foreground">{item.duration}</div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Visitor Locations</CardTitle>
-                  <CardDescription>Top regions by visitor count</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      { city: 'New York', region: 'United States', visitors: 2845, percentage: 22.8 },
-                      { city: 'London', region: 'United Kingdom', visitors: 1920, percentage: 15.4 },
-                      { city: 'Berlin', region: 'Germany', visitors: 1560, percentage: 12.5 },
-                      { city: 'Toronto', region: 'Canada', visitors: 1340, percentage: 10.8 },
-                      { city: 'Sydney', region: 'Australia', visitors: 980, percentage: 7.9 },
-                    ].map((item, index) => (
-                      <div key={index} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
-                        <div className="flex-1">
-                          <p className="font-medium">{item.city}</p>
-                          <p className="text-sm text-muted-foreground">{item.region}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">{item.visitors.toLocaleString()}</p>
-                          <p className="text-sm text-muted-foreground">{item.percentage}%</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Visitor Activity</CardTitle>
-                <CardDescription>Real-time visitor sessions and engagement</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { id: 1, page: '/blog', city: 'San Francisco', region: 'USA', duration: '5m 32s', timestamp: '2 minutes ago' },
-                    { id: 2, page: '/pricing', city: 'Paris', region: 'France', duration: '3m 18s', timestamp: '5 minutes ago' },
-                    { id: 3, page: '/home', city: 'Tokyo', region: 'Japan', duration: '2m 45s', timestamp: '8 minutes ago' },
-                    { id: 4, page: '/calculate', city: 'Mumbai', region: 'India', duration: '4m 12s', timestamp: '12 minutes ago' },
-                    { id: 5, page: '/about', city: 'São Paulo', region: 'Brazil', duration: '1m 58s', timestamp: '15 minutes ago' },
-                    { id: 6, page: '/blog', city: 'Amsterdam', region: 'Netherlands', duration: '6m 22s', timestamp: '18 minutes ago' },
-                  ].map((activity) => (
-                    <div key={activity.id} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{activity.page}</p>
-                          <Badge variant="outline" className="text-xs">{activity.duration}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {activity.city}, {activity.region}
-                        </p>
-                      </div>
-                      <div className="text-sm text-muted-foreground">{activity.timestamp}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Posts Management Tab */}
-          <TabsContent value="posts" className="space-y-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="text-3xl font-bold mb-2">Blog Posts</h2>
-                <p className="text-muted-foreground">Manage all your blog posts</p>
-              </div>
-              <Button onClick={() => setActiveTab("editor")}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Post
-              </Button>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Filters & Search</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label>Search</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search posts..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select value={filterStatus} onValueChange={setFilterStatus}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="published">Published</SelectItem>
-                        <SelectItem value="draft">Draft</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select value={filterCategory} onValueChange={setFilterCategory}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {categories.map(cat => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid gap-4">
-              {filteredPosts.map((post) => (
-                <Card key={post.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row gap-4">
-                      <img
-                        src={post.image}
-                        alt={post.title}
-                        className="w-full md:w-32 h-32 object-cover rounded-lg"
-                      />
+                  {mockPosts.slice(0, 5).map((post) => (
+                    <div key={post.id} className="flex items-start justify-between border-b pb-4 last:border-0 last:pb-0 hover:bg-muted/20 -mx-4 px-4 py-2 rounded-lg transition-colors">
                       <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="text-xl font-semibold mb-1">{post.title}</h3>
-                            <p className="text-sm text-muted-foreground mb-2">{post.excerpt}</p>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(post)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDelete(post.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2 items-center text-sm text-muted-foreground">
-                          <Badge variant={post.status === "published" ? "default" : "secondary"}>
+                        <h3 className="font-medium text-foreground mb-1">{post.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-2">{post.excerpt}</p>
+                        <div className="flex gap-4 items-center">
+                          <span className="text-xs text-muted-foreground">{post.author}</span>
+                          <span className="text-xs text-muted-foreground">{post.date}</span>
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                            post.status === 'published' 
+                              ? 'bg-primary/10 text-primary' 
+                              : 'bg-muted text-muted-foreground'
+                          }`}>
                             {post.status}
-                          </Badge>
-                          <Badge variant="outline">{post.category}</Badge>
-                          <span>•</span>
-                          <span>{post.author}</span>
-                          <span>•</span>
-                          <span>{post.date}</span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <MessageSquare className="h-3 w-3" />
-                            {post.comments.length} comments
                           </span>
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {filteredPosts.length === 0 && (
-                <Card>
-                  <CardContent className="py-16 text-center">
-                    <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No posts found</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Editor Tab */}
-          <TabsContent value="editor" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-3xl font-bold mb-2">
-                  {isEditing ? "Edit Post" : "Create New Post"}
-                </h2>
-                <p className="text-muted-foreground">
-                  {isEditing ? "Update your blog post" : "Write and publish a new blog post"}
-                </p>
-              </div>
-              {isEditing && (
-                <Button variant="outline" onClick={resetForm}>
-                  Cancel Edit
-                </Button>
-              )}
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Post Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Title *</Label>
-                      <Input
-                        id="title"
-                        placeholder="Post title"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="author">Author *</Label>
-                      <Input
-                        id="author"
-                        placeholder="Author name"
-                        value={formData.author}
-                        onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category *</Label>
-                      <Select
-                        value={formData.category}
-                        onValueChange={(value) => setFormData({ ...formData, category: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map(cat => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="status">Status *</Label>
-                      <Select
-                        value={formData.status}
-                        onValueChange={(value: "published" | "draft") => setFormData({ ...formData, status: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
-                          <SelectItem value="published">Published</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="image">Featured Image *</Label>
-                    <p className="text-sm text-muted-foreground">Recommended size: 1200x630px (16:9 aspect ratio) for optimal display across all devices</p>
-                    <div className="space-y-3">
-                      <div>
-                        <Label htmlFor="image-upload" className="text-sm text-muted-foreground">Upload Image</Label>
-                        <Input
-                          id="image-upload"
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                setFormData({ ...formData, image: reader.result as string });
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                          className="cursor-pointer"
-                        />
-                      </div>
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                          <span className="w-full border-t" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                          <span className="bg-background px-2 text-muted-foreground">Or use URL</span>
-                        </div>
-                      </div>
-                      <div>
-                        <Input
-                          id="image-url"
-                          type="url"
-                          placeholder="https://example.com/image.jpg"
-                          value={formData.image.startsWith('data:') ? '' : formData.image}
-                          onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                        />
-                      </div>
-                      {formData.image && (
-                        <div className="mt-3">
-                          <Label className="text-sm text-muted-foreground mb-2 block">Preview</Label>
-                          <img 
-                            src={formData.image} 
-                            alt="Preview" 
-                            className="w-full max-w-xs h-48 object-cover rounded-lg border"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="excerpt">Excerpt *</Label>
-                    <Textarea
-                      id="excerpt"
-                      placeholder="Brief description of the post"
-                      value={formData.excerpt}
-                      onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                      rows={3}
-                      required
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Content *</CardTitle>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowPreview(!showPreview)}
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      {showPreview ? "Hide Preview" : "Show Preview"}
-                    </Button>
-                  </div>
-                  <CardDescription>
-                    For in-text images: Recommended size is 800x450px (16:9) or 800x600px (4:3). Maximum width of 1200px for best performance.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {!showPreview ? (
-                    <RichTextEditor
-                      value={formData.content}
-                      onChange={(value) => setFormData({ ...formData, content: value })}
-                      placeholder="Write your blog post content here..."
-                    />
-                  ) : (
-                    <div className="prose dark:prose-invert max-w-none p-6 border rounded-lg bg-muted/20">
-                      <div dangerouslySetInnerHTML={{ __html: formData.content }} />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <div className="flex gap-4 justify-end">
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  {isEditing ? "Update Post" : "Create Post"}
-                </Button>
-              </div>
-            </form>
-          </TabsContent>
-
-          {/* Comments Tab */}
-          <TabsContent value="comments" className="space-y-6">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">Comments Management</h2>
-              <p className="text-muted-foreground">Review and moderate blog comments</p>
-            </div>
-
-            <div className="grid gap-4">
-              {allComments.length === 0 ? (
-                <Card>
-                  <CardContent className="py-16 text-center">
-                    <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No comments yet</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                allComments.map((comment) => (
-                  <Card key={comment.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="space-y-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <p className="font-semibold">{comment.author}</p>
-                              <Badge
-                                variant={
-                                  comment.status === "approved"
-                                    ? "default"
-                                    : comment.status === "pending"
-                                    ? "secondary"
-                                    : "destructive"
-                                }
-                              >
-                                {comment.status}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              {comment.email} • {comment.date}
-                            </p>
-                            <p className="text-sm text-muted-foreground mb-3">
-                              On post: <span className="font-medium text-foreground">{comment.postTitle}</span>
-                            </p>
-                            <p className="text-sm">{comment.content}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          {comment.status === "pending" && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => handleCommentAction(comment.postId, comment.id, "approve")}
-                              >
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleCommentAction(comment.postId, comment.id, "reject")}
-                              >
-                                <XCircle className="mr-2 h-4 w-4" />
-                                Reject
-                              </Button>
-                            </>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setConfirmDialog({
-                                open: true,
-                                title: "Delete Comment",
-                                description: "Are you sure you want to delete this comment? This action cannot be undone.",
-                                variant: "destructive",
-                                onConfirm: () => {
-                                  handleCommentAction(comment.postId, comment.id, "delete");
-                                  setConfirmDialog({ ...confirmDialog, open: false });
-                                }
-                              });
-                            }}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Admins Management Tab */}
-          <TabsContent value="admins" className="space-y-6">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">Admin Management</h2>
-              <p className="text-muted-foreground">Manage admin users and their permissions</p>
-            </div>
-
-            <Card className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-amber-900 dark:text-amber-100 mb-1">Security Notice</p>
-                    <p className="text-sm text-amber-800 dark:text-amber-200">
-                      This is a demo implementation using localStorage. For production use, enable Lovable Cloud for proper authentication with secure password hashing, role-based access control, and database-backed user management.
-                    </p>
-                  </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
 
-            <div className="grid gap-6 lg:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Create New Admin</CardTitle>
-                  <CardDescription>Add a new administrator to the system</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleAddAdmin} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="admin-email">Email *</Label>
-                      <Input
-                        id="admin-email"
-                        type="email"
-                        placeholder="admin@example.com"
-                        value={newAdmin.email}
-                        onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="admin-name">Full Name *</Label>
-                      <Input
-                        id="admin-name"
-                        placeholder="John Doe"
-                        value={newAdmin.fullName}
-                        onChange={(e) => setNewAdmin({ ...newAdmin, fullName: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="admin-password">Password *</Label>
-                      <Input
-                        id="admin-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={newAdmin.password}
-                        onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
-                        required
-                        minLength={8}
-                      />
-                      <p className="text-xs text-muted-foreground">Minimum 8 characters</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="admin-role">Role *</Label>
-                      <Select
-                        value={newAdmin.role}
-                        onValueChange={(value: "admin" | "editor" | "viewer") => setNewAdmin({ ...newAdmin, role: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin - Full access</SelectItem>
-                          <SelectItem value="editor">Editor - Can edit content</SelectItem>
-                          <SelectItem value="viewer">Viewer - Read only</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button type="submit" className="w-full">
-                      <Users className="mr-2 h-4 w-4" />
-                      Create Admin
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Admin Roles</CardTitle>
-                  <CardDescription>Understanding permission levels</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Shield className="h-5 w-5 text-primary mt-0.5" />
-                      <div>
-                        <p className="font-semibold">Admin</p>
-                        <p className="text-sm text-muted-foreground">Full system access including user management</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Edit className="h-5 w-5 text-primary mt-0.5" />
-                      <div>
-                        <p className="font-semibold">Editor</p>
-                        <p className="text-sm text-muted-foreground">Can create and edit content, manage comments</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Eye className="h-5 w-5 text-primary mt-0.5" />
-                      <div>
-                        <p className="font-semibold">Viewer</p>
-                        <p className="text-sm text-muted-foreground">Read-only access to analytics and content</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Admins ({admins.length})</CardTitle>
-                <CardDescription>Manage existing admin accounts</CardDescription>
+          {/* Posts List Tab */}
+          <TabsContent value="posts" className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <CardTitle className="text-lg">All Posts</CardTitle>
+                <CardDescription>Manage your blog posts</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <div className="space-y-3">
-                  {admins.map((admin) => (
-                    <div key={admin.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  {mockPosts.map((post) => (
+                    <div key={post.id} className="flex items-center justify-between border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold">{admin.fullName}</p>
-                          {admin.isMainAdmin && (
-                            <Badge variant="default" className="text-xs">Main Admin</Badge>
-                          )}
-                          <Badge variant="outline" className="text-xs capitalize">{admin.role}</Badge>
+                        <h3 className="font-medium text-foreground mb-1">{post.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-2">{post.excerpt}</p>
+                        <div className="flex gap-4 items-center">
+                          <span className="text-xs text-muted-foreground">{post.author}</span>
+                          <span className="text-xs text-muted-foreground">{post.date}</span>
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                            post.status === 'published' 
+                              ? 'bg-primary/10 text-primary' 
+                              : 'bg-muted text-muted-foreground'
+                          }`}>
+                            {post.status}
+                          </span>
                         </div>
-                        <p className="text-sm text-muted-foreground">{admin.email}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Created {new Date(admin.createdAt).toLocaleDateString()}
-                        </p>
                       </div>
-                      <div className="flex gap-2">
-                        {!admin.isMainAdmin && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDeleteAdmin(admin.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+                      <div className="flex gap-2 ml-4">
+                        <Button variant="outline" size="sm" className="hover:bg-primary/10 hover:text-primary hover:border-primary">Edit</Button>
+                        <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10 hover:border-destructive">Delete</Button>
                       </div>
                     </div>
                   ))}
@@ -1164,125 +370,347 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* Company Pages Tab */}
-          <TabsContent value="company" className="space-y-6">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">Company Pages</h2>
-              <p className="text-muted-foreground">Manage content for company section pages</p>
-            </div>
+          {/* Blog Editor Tab */}
+          <TabsContent value="editor" className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <CardTitle className="text-lg">Create New Post</CardTitle>
+                <CardDescription>Write and publish your blog post</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6 pt-6">
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-sm font-medium">Post Title</Label>
+                  <Input id="title" placeholder="Enter post title..." className="h-11" />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="excerpt" className="text-sm font-medium">Excerpt</Label>
+                  <Input id="excerpt" placeholder="Brief description..." className="h-11" />
+                </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {[
-                { id: 'careers', title: 'Careers', description: 'Job openings and company culture' },
-                { id: 'contact', title: 'Contact', description: 'Contact information and form' },
-                { id: 'press', title: 'Press & Media', description: 'Press releases and media kit' },
-                { id: 'partners', title: 'Partners', description: 'Partnership information' },
-              ].map((page) => (
-                <Card key={page.id}>
-                  <CardHeader>
-                    <CardTitle>{page.title}</CardTitle>
-                    <CardDescription>{page.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Page Title</Label>
-                      <Input placeholder={`${page.title} page title`} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Content</Label>
-                      <Textarea 
-                        placeholder={`Enter content for ${page.title} page`}
-                        rows={4}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Image URL (optional)</Label>
-                      <Input type="url" placeholder="https://example.com/image.jpg" />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button className="flex-1">Save Changes</Button>
-                      <Button variant="outline">Preview</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Content</Label>
+                  <RichTextEditor
+                    value={editorContent}
+                    onChange={setEditorContent}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button className="flex-1 h-11">Publish Post</Button>
+                  <Button variant="outline" className="flex-1 h-11">Save as Draft</Button>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          {/* Resources Tab */}
-          <TabsContent value="resources" className="space-y-6">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">Resources Management</h2>
-              <p className="text-muted-foreground">Manage blog and all resource section pages</p>
-            </div>
+          {/* Admins Management Tab */}
+          <TabsContent value="admins" className="space-y-6">
+            <Alert className="border-primary/20 bg-primary/5">
+              <AlertDescription className="text-sm">
+                <strong className="text-primary">Security Note:</strong> This is a demo admin panel using localStorage. 
+                In production, implement proper authentication with secure backend validation, password hashing, 
+                and role-based access control (RBAC). Never rely on client-side storage for authentication.
+              </AlertDescription>
+            </Alert>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Blog Posts</CardTitle>
-                <CardDescription>Manage blog content from the Posts and Editor tabs</CardDescription>
+            <Card className="shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <CardTitle className="text-lg">Admin Users</CardTitle>
+                <CardDescription>Manage site administrators and their roles</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{stats.totalPosts} Total Posts</p>
-                    <p className="text-sm text-muted-foreground">{stats.publishedPosts} published, {stats.draftPosts} drafts</p>
-                  </div>
-                  <Button onClick={() => setActiveTab("posts")}>
-                    View Posts
-                  </Button>
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  {admins.map((admin) => (
+                    <div key={admin.id} className="flex items-center justify-between border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-foreground">{admin.fullName}</h3>
+                        <p className="text-sm text-muted-foreground mt-0.5">{admin.email}</p>
+                        <div className="flex gap-2 mt-3">
+                          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                            admin.role === 'admin' ? 'bg-primary/10 text-primary' :
+                            admin.role === 'editor' ? 'bg-secondary/10 text-secondary' :
+                            'bg-muted text-muted-foreground'
+                          }`}>
+                            {admin.role}
+                          </span>
+                          {admin.isMainAdmin && (
+                            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-accent/10 text-accent">
+                              Main Admin
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {!admin.isMainAdmin && currentAdmin?.role === 'admin' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:bg-destructive/10 hover:border-destructive"
+                          onClick={() => {
+                            setAdminToDelete(admin);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {[
-                { id: 'webinars', title: 'Webinars', description: 'Upcoming and recorded webinars' },
-                { id: 'guide', title: 'Sustainability Guide', description: 'Best practices and guides' },
-                { id: 'standards', title: 'Carbon Standards', description: 'Industry standards and certifications' },
-                { id: 'case-studies', title: 'Case Studies', description: 'Customer success stories' },
-                { id: 'documentation', title: 'Documentation', description: 'Technical documentation' },
-              ].map((resource) => (
-                <Card key={resource.id}>
-                  <CardHeader>
-                    <CardTitle>{resource.title}</CardTitle>
-                    <CardDescription>{resource.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Page Title</Label>
-                      <Input placeholder={`${resource.title} page title`} />
+            {currentAdmin?.role === 'admin' && (
+              <Card className="shadow-sm">
+                <CardHeader className="border-b bg-muted/20">
+                  <CardTitle className="text-lg">Create New Admin</CardTitle>
+                  <CardDescription>Add a new administrator to the system</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <form onSubmit={handleCreateAdmin} className="space-y-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <Label htmlFor="new-admin-email" className="text-sm font-medium">Email</Label>
+                        <Input
+                          id="new-admin-email"
+                          type="email"
+                          value={newAdminForm.email}
+                          onChange={(e) => setNewAdminForm({ ...newAdminForm, email: e.target.value })}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-admin-name" className="text-sm font-medium">Full Name</Label>
+                        <Input
+                          id="new-admin-name"
+                          value={newAdminForm.fullName}
+                          onChange={(e) => setNewAdminForm({ ...newAdminForm, fullName: e.target.value })}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-admin-role" className="text-sm font-medium">Role</Label>
+                        <Select
+                          value={newAdminForm.role}
+                          onValueChange={(value) => setNewAdminForm({ ...newAdminForm, role: value as AdminUser['role'] })}
+                        >
+                          <SelectTrigger id="new-admin-role" className="h-11">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="editor">Editor</SelectItem>
+                            <SelectItem value="viewer">Viewer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-admin-password" className="text-sm font-medium">Password</Label>
+                        <Input
+                          id="new-admin-password"
+                          type="password"
+                          value={newAdminForm.password}
+                          onChange={(e) => setNewAdminForm({ ...newAdminForm, password: e.target.value })}
+                          required
+                          className="h-11"
+                        />
+                      </div>
                     </div>
+                    <div className="pt-2">
+                      <Button type="submit" className="w-full gap-2 h-11">
+                        <Plus className="h-4 w-4" />
+                        Create Admin
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card className="shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <CardTitle className="text-lg">Role Descriptions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-6">
+                <div className="flex gap-3 items-start">
+                  <div className="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-xs font-medium h-fit">Admin</div>
+                  <p className="text-sm text-muted-foreground pt-1">Full access to all features including user management</p>
+                </div>
+                <div className="flex gap-3 items-start">
+                  <div className="bg-secondary/10 text-secondary px-3 py-1.5 rounded-full text-xs font-medium h-fit">Editor</div>
+                  <p className="text-sm text-muted-foreground pt-1">Can create, edit, and publish content</p>
+                </div>
+                <div className="flex gap-3 items-start">
+                  <div className="bg-muted text-muted-foreground px-3 py-1.5 rounded-full text-xs font-medium h-fit">Viewer</div>
+                  <p className="text-sm text-muted-foreground pt-1">Read-only access to content and analytics</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <CardTitle className="text-lg">Profile Settings</CardTitle>
+                <CardDescription>Update your personal information and password</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <form onSubmit={handleUpdateProfile} className="space-y-6">
+                  <div className="space-y-5">
                     <div className="space-y-2">
-                      <Label>Content</Label>
-                      <Textarea 
-                        placeholder={`Enter content for ${resource.title} page`}
-                        rows={4}
+                      <Label htmlFor="profile-name" className="text-sm font-medium">Full Name</Label>
+                      <Input
+                        id="profile-name"
+                        value={profileForm.fullName}
+                        onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                        className="h-11"
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <Label>Image URL (optional)</Label>
-                      <Input type="url" placeholder="https://example.com/image.jpg" />
+                      <Label htmlFor="profile-email" className="text-sm font-medium">Email</Label>
+                      <Input
+                        id="profile-email"
+                        type="email"
+                        value={profileForm.email}
+                        onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                        className="h-11"
+                      />
                     </div>
-                    <div className="flex gap-2">
-                      <Button className="flex-1">Save Changes</Button>
-                      <Button variant="outline">Preview</Button>
+                  </div>
+
+                  <div className="border-t pt-6">
+                    <h3 className="text-base font-medium mb-4">Change Password</h3>
+                    <div className="space-y-5">
+                      <div className="space-y-2">
+                        <Label htmlFor="current-password" className="text-sm font-medium">Current Password</Label>
+                        <Input
+                          id="current-password"
+                          type="password"
+                          value={profileForm.currentPassword}
+                          onChange={(e) => setProfileForm({ ...profileForm, currentPassword: e.target.value })}
+                          className="h-11"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="new-password" className="text-sm font-medium">New Password</Label>
+                        <Input
+                          id="new-password"
+                          type="password"
+                          value={profileForm.newPassword}
+                          onChange={(e) => setProfileForm({ ...profileForm, newPassword: e.target.value })}
+                          className="h-11"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="confirm-password" className="text-sm font-medium">Confirm New Password</Label>
+                        <Input
+                          id="confirm-password"
+                          type="password"
+                          value={profileForm.confirmPassword}
+                          onChange={(e) => setProfileForm({ ...profileForm, confirmPassword: e.target.value })}
+                          className="h-11"
+                        />
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  </div>
+
+                  <div className="pt-4">
+                    <Button type="submit" className="w-full gap-2 h-11">
+                      <Save className="h-4 w-4" />
+                      Save Changes
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Company Tab */}
+          <TabsContent value="company" className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <CardTitle className="text-lg">Company Pages</CardTitle>
+                <CardDescription>Manage content for company-related pages</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  {mockCompanyPages.map((page) => (
+                    <div key={page.id} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium text-foreground">{page.title}</h3>
+                          <p className="text-sm text-muted-foreground mt-0.5">/{page.slug}</p>
+                        </div>
+                        <Button variant="outline" size="sm" className="hover:bg-primary/10 hover:text-primary hover:border-primary">
+                          Edit Content
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Resources Tab */}
+          <TabsContent value="resources" className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <CardTitle className="text-lg">Resources</CardTitle>
+                <CardDescription>Manage blog posts and resource pages</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-base font-medium">Blog Posts</h3>
+                      <Button variant="outline" size="sm">
+                        View All Posts
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Manage blog posts from the Posts and Editor tabs</p>
+                  </div>
+
+                  <div className="border-t pt-6">
+                    <h3 className="text-base font-medium mb-4">Resource Pages</h3>
+                    <div className="space-y-3">
+                      {mockResourcePages.map((page) => (
+                        <div key={page.id} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium text-foreground">{page.title}</h4>
+                              <p className="text-sm text-muted-foreground mt-0.5">/{page.slug}</p>
+                            </div>
+                            <Button variant="outline" size="sm" className="hover:bg-primary/10 hover:text-primary hover:border-primary">
+                              Edit Content
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
 
+      {/* Delete Confirmation Dialog */}
       <ConfirmDialog
-        open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
-        title={confirmDialog.title}
-        description={confirmDialog.description}
-        onConfirm={confirmDialog.onConfirm}
-        variant={confirmDialog.variant}
-        confirmText={confirmDialog.variant === "destructive" ? "Delete" : "Continue"}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Delete Administrator"
+        description={`Are you sure you want to delete ${adminToDelete?.fullName}? This action cannot be undone.`}
+        onConfirm={handleDeleteAdmin}
+        confirmText="Delete"
+        variant="destructive"
       />
     </div>
   );

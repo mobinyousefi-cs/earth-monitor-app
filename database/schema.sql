@@ -224,6 +224,40 @@ CREATE TABLE resource_pages (
 );
 
 -- ============================================
+-- PRICING & SUBSCRIPTIONS
+-- ============================================
+
+-- Pricing plans table
+CREATE TABLE pricing_plans (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    plan_name VARCHAR(100) UNIQUE NOT NULL, -- 'demo', 'emissions_calculation', 'consultant'
+    display_name VARCHAR(100) NOT NULL,
+    price_monthly DECIMAL(10, 2) NOT NULL,
+    price_yearly DECIMAL(10, 2),
+    description TEXT,
+    features JSONB, -- Array of features as JSON
+    max_users INTEGER,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Customer subscriptions
+CREATE TABLE subscriptions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES admin_users(id) ON DELETE CASCADE,
+    plan_id UUID REFERENCES pricing_plans(id) ON DELETE SET NULL,
+    status VARCHAR(50) DEFAULT 'active', -- 'active', 'cancelled', 'expired', 'trial'
+    billing_cycle VARCHAR(20) DEFAULT 'monthly', -- 'monthly', 'yearly'
+    trial_ends_at TIMESTAMP WITH TIME ZONE,
+    current_period_start TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    current_period_end TIMESTAMP WITH TIME ZONE,
+    cancelled_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
 -- INDEXES
 -- ============================================
 
@@ -275,6 +309,12 @@ CREATE TRIGGER update_company_pages_updated_at BEFORE UPDATE ON company_pages
 CREATE TRIGGER update_resource_pages_updated_at BEFORE UPDATE ON resource_pages
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_pricing_plans_updated_at BEFORE UPDATE ON pricing_plans
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON subscriptions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Update search vector for blog posts
 CREATE OR REPLACE FUNCTION blog_posts_search_trigger()
 RETURNS TRIGGER AS $$
@@ -321,3 +361,12 @@ INSERT INTO user_roles (user_id, role)
 SELECT id, 'editor' FROM admin_users WHERE email = 'editor@cleverreduction.com'
 UNION ALL
 SELECT id, 'viewer' FROM admin_users WHERE email = 'viewer@cleverreduction.com';
+
+-- Insert pricing plans
+INSERT INTO pricing_plans (plan_name, display_name, price_monthly, price_yearly, description, features, max_users) VALUES 
+    ('demo', 'Demo', 0.00, 0.00, 'Try our platform with sample data', 
+     '["Sample emissions data", "Basic dashboard access", "Limited reporting", "Email support", "14-day trial period"]', 1),
+    ('emissions_calculation', 'Emissions Calculation', 99.00, 990.00, 'Comprehensive carbon footprint tracking', 
+     '["Complete emissions tracking", "Real-time data analysis", "Custom reporting", "API access", "Priority email support", "Data export functionality", "Multi-user access (up to 5)"]', 5),
+    ('consultant', 'Consultant', 199.00, 1990.00, 'Full tracking with expert reduction strategies', 
+     '["Everything in Emissions Calculation", "Dedicated sustainability consultant", "Custom reduction strategies", "Quarterly strategy reviews", "Industry benchmarking", "Advanced analytics & insights", "Unlimited users", "Phone & priority support"]', NULL);
