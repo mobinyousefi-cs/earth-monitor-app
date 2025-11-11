@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import logo from "@/assets/clever-reduction-logo.png";
 import { cn } from "@/lib/utils";
+import SearchDialog from "./SearchDialog";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -29,6 +30,7 @@ const Header = () => {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -192,6 +194,7 @@ const Header = () => {
                 variant="ghost"
                 size="icon"
                 aria-label="Search"
+                onClick={() => setSearchOpen(true)}
               >
                 <Search className="h-5 w-5" />
               </Button>
@@ -357,6 +360,8 @@ const Header = () => {
           </div>
         </div>
       </header>
+      
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </>
   );
 };

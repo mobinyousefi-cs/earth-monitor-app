@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,7 +19,10 @@ import {
   Settings,
   Save,
   Building2,
-  BookOpen
+  BookOpen,
+  MessageSquare,
+  CheckCircle,
+  Clock
 } from "lucide-react";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
@@ -48,6 +52,19 @@ interface CompanyPage {
   slug: string;
   title: string;
   content: string;
+}
+
+interface SupportTicket {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  company: string;
+  subject: string;
+  message: string;
+  status: "open" | "in_progress" | "closed";
+  createdAt: string;
+  response?: string;
 }
 
 const mockPosts: BlogPost[] = [
@@ -109,6 +126,9 @@ const AdminDashboard = () => {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState<AdminUser | null>(null);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [ticketResponse, setTicketResponse] = useState("");
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem("adminAuth");
@@ -147,6 +167,12 @@ const AdminDashboard = () => {
         confirmPassword: "",
       });
       localStorage.setItem("adminUsers", JSON.stringify([mainAdmin]));
+    }
+
+    // Load support tickets
+    const savedTickets = localStorage.getItem("supportTickets");
+    if (savedTickets) {
+      setTickets(JSON.parse(savedTickets));
     }
   }, [navigate]);
 
@@ -211,6 +237,31 @@ const AdminDashboard = () => {
     setProfileForm({ ...profileForm, currentPassword: "", newPassword: "", confirmPassword: "" });
   };
 
+  const handleUpdateTicketStatus = (ticketId: string, newStatus: SupportTicket['status']) => {
+    const updatedTickets = tickets.map(t => 
+      t.id === ticketId ? { ...t, status: newStatus } : t
+    );
+    setTickets(updatedTickets);
+    localStorage.setItem("supportTickets", JSON.stringify(updatedTickets));
+    toast.success("Ticket status updated");
+  };
+
+  const handleRespondToTicket = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTicket) return;
+
+    const updatedTickets = tickets.map(t => 
+      t.id === selectedTicket.id 
+        ? { ...t, response: ticketResponse, status: "closed" as const } 
+        : t
+    );
+    setTickets(updatedTickets);
+    localStorage.setItem("supportTickets", JSON.stringify(updatedTickets));
+    setTicketResponse("");
+    setSelectedTicket(null);
+    toast.success("Response sent and ticket closed");
+  };
+
   const mockStats = {
     totalPosts: 24,
     publishedPosts: 18,
@@ -270,6 +321,15 @@ const AdminDashboard = () => {
             <TabsTrigger value="resources" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
               <BookOpen className="h-4 w-4" />
               Resources
+            </TabsTrigger>
+            <TabsTrigger value="tickets" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg">
+              <MessageSquare className="h-4 w-4" />
+              Support Tickets
+              {tickets.filter(t => t.status === 'open').length > 0 && (
+                <span className="ml-1 bg-destructive text-destructive-foreground rounded-full px-2 py-0.5 text-xs">
+                  {tickets.filter(t => t.status === 'open').length}
+                </span>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -656,6 +716,129 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Support Tickets Tab */}
+          <TabsContent value="tickets" className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <CardTitle className="text-lg">Support Tickets</CardTitle>
+                <CardDescription>Manage and respond to customer support requests</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {tickets.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No support tickets yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {tickets.map((ticket) => (
+                      <div 
+                        key={ticket.id} 
+                        className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-medium text-foreground">{ticket.subject}</h3>
+                              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                                ticket.status === 'open' ? 'bg-destructive/10 text-destructive' :
+                                ticket.status === 'in_progress' ? 'bg-secondary/10 text-secondary' :
+                                'bg-primary/10 text-primary'
+                              }`}>
+                                {ticket.status === 'open' ? <Clock className="h-3 w-3 inline mr-1" /> : 
+                                 ticket.status === 'closed' ? <CheckCircle className="h-3 w-3 inline mr-1" /> : null}
+                                {ticket.status.replace('_', ' ')}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {ticket.firstName} {ticket.lastName} • {ticket.email} • {ticket.company}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(ticket.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <p className="text-sm mb-3 p-3 bg-muted/30 rounded">{ticket.message}</p>
+                        
+                        {ticket.response && (
+                          <div className="mt-3 p-3 bg-primary/5 border-l-4 border-primary rounded">
+                            <p className="text-sm font-medium mb-1">Admin Response:</p>
+                            <p className="text-sm">{ticket.response}</p>
+                          </div>
+                        )}
+                        
+                        <div className="flex gap-2 mt-3">
+                          {ticket.status !== 'closed' && (
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setSelectedTicket(ticket)}
+                              >
+                                Respond
+                              </Button>
+                              {ticket.status === 'open' && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleUpdateTicketStatus(ticket.id, 'in_progress')}
+                                >
+                                  Mark In Progress
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Response Dialog */}
+            {selectedTicket && (
+              <Card className="shadow-sm border-primary/50">
+                <CardHeader className="border-b bg-primary/5">
+                  <CardTitle className="text-lg">Respond to Ticket</CardTitle>
+                  <CardDescription>
+                    Responding to: {selectedTicket.subject}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <form onSubmit={handleRespondToTicket} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Response</Label>
+                      <Textarea
+                        value={ticketResponse}
+                        onChange={(e) => setTicketResponse(e.target.value)}
+                        placeholder="Type your response..."
+                        rows={6}
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="submit" className="gap-2">
+                        Send Response & Close Ticket
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedTicket(null);
+                          setTicketResponse("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Resources Tab */}

@@ -142,8 +142,80 @@ const About = () => {
           </div>
         </section>
 
+        {/* Team Section */}
+        <section className="animate-fade-in" style={{ animationDelay: "0.4s" }}>
+          <div className="text-center space-y-4 mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold">Meet Our Team</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Our diverse team of experts is dedicated to creating innovative solutions for a sustainable future
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <Card className="text-center">
+              <CardHeader>
+                <div className="w-24 h-24 rounded-full bg-primary/10 mx-auto mb-4 flex items-center justify-center">
+                  <span className="text-3xl font-bold text-primary">JD</span>
+                </div>
+                <CardTitle className="text-lg">Dr. Jane Davis</CardTitle>
+                <p className="text-sm text-muted-foreground">Chief Sustainability Officer</p>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  PhD in Environmental Science with 15+ years in corporate sustainability
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <div className="w-24 h-24 rounded-full bg-secondary/10 mx-auto mb-4 flex items-center justify-center">
+                  <span className="text-3xl font-bold text-secondary">MC</span>
+                </div>
+                <CardTitle className="text-lg">Michael Chen</CardTitle>
+                <p className="text-sm text-muted-foreground">Head of Technology</p>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Former tech lead at major climate tech companies, expert in data analytics
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <div className="w-24 h-24 rounded-full bg-accent/10 mx-auto mb-4 flex items-center justify-center">
+                  <span className="text-3xl font-bold text-accent">SP</span>
+                </div>
+                <CardTitle className="text-lg">Sarah Peterson</CardTitle>
+                <p className="text-sm text-muted-foreground">Director of Client Success</p>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  10+ years helping organizations achieve their sustainability goals
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <div className="w-24 h-24 rounded-full bg-primary/10 mx-auto mb-4 flex items-center justify-center">
+                  <span className="text-3xl font-bold text-primary">AR</span>
+                </div>
+                <CardTitle className="text-lg">Ahmed Rahman</CardTitle>
+                <p className="text-sm text-muted-foreground">Lead Carbon Analyst</p>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Certified carbon accountant specializing in GHG protocol standards
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
         {/* Join Us Section */}
-        <section className="text-center space-y-6 animate-fade-in" style={{ animationDelay: "0.4s" }}>
+        <section className="text-center space-y-6 animate-fade-in" style={{ animationDelay: "0.5s" }}>
           <h2 className="text-3xl lg:text-4xl font-bold">Join Our Mission</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Whether you're an individual looking to reduce your carbon footprint or an organization 

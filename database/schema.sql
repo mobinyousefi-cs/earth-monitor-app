@@ -224,6 +224,27 @@ CREATE TABLE resource_pages (
 );
 
 -- ============================================
+-- SUPPORT TICKETS
+-- ============================================
+
+-- Support tickets table
+CREATE TABLE support_tickets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    company VARCHAR(255) NOT NULL,
+    subject VARCHAR(500) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'open', -- 'open', 'in_progress', 'closed'
+    response TEXT,
+    admin_id UUID REFERENCES admin_users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    closed_at TIMESTAMP WITH TIME ZONE
+);
+
+-- ============================================
 -- PRICING & SUBSCRIPTIONS
 -- ============================================
 
@@ -284,6 +305,11 @@ CREATE INDEX idx_company_pages_published ON company_pages(is_published);
 CREATE INDEX idx_resource_pages_slug ON resource_pages(page_slug);
 CREATE INDEX idx_resource_pages_published ON resource_pages(is_published);
 
+-- Support tickets indexes
+CREATE INDEX idx_support_tickets_status ON support_tickets(status);
+CREATE INDEX idx_support_tickets_email ON support_tickets(email);
+CREATE INDEX idx_support_tickets_created ON support_tickets(created_at DESC);
+
 -- ============================================
 -- FUNCTIONS & TRIGGERS
 -- ============================================
@@ -313,6 +339,9 @@ CREATE TRIGGER update_pricing_plans_updated_at BEFORE UPDATE ON pricing_plans
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON subscriptions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_support_tickets_updated_at BEFORE UPDATE ON support_tickets
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Update search vector for blog posts
