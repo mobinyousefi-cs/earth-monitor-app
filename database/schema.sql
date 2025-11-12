@@ -245,6 +245,27 @@ CREATE TABLE support_tickets (
 );
 
 -- ============================================
+-- WEBINARS
+-- ============================================
+
+-- Webinars table
+CREATE TABLE webinars (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    speaker_name VARCHAR(255) NOT NULL,
+    scheduled_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    duration_minutes INTEGER NOT NULL,
+    registration_url TEXT,
+    max_capacity INTEGER,
+    current_registrations INTEGER DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'scheduled', -- 'scheduled', 'live', 'completed', 'cancelled'
+    created_by UUID REFERENCES admin_users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
 -- PRICING & SUBSCRIPTIONS
 -- ============================================
 
@@ -310,6 +331,11 @@ CREATE INDEX idx_support_tickets_status ON support_tickets(status);
 CREATE INDEX idx_support_tickets_email ON support_tickets(email);
 CREATE INDEX idx_support_tickets_created ON support_tickets(created_at DESC);
 
+-- Webinars indexes
+CREATE INDEX idx_webinars_scheduled_date ON webinars(scheduled_date);
+CREATE INDEX idx_webinars_status ON webinars(status);
+CREATE INDEX idx_webinars_created_by ON webinars(created_by);
+
 -- ============================================
 -- FUNCTIONS & TRIGGERS
 -- ============================================
@@ -342,6 +368,9 @@ CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON subscriptions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_support_tickets_updated_at BEFORE UPDATE ON support_tickets
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_webinars_updated_at BEFORE UPDATE ON webinars
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Update search vector for blog posts

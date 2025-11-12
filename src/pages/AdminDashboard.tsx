@@ -843,44 +843,158 @@ const AdminDashboard = () => {
 
           {/* Resources Tab */}
           <TabsContent value="resources" className="space-y-6">
-            <Card className="shadow-sm">
-              <CardHeader className="border-b bg-muted/20">
-                <CardTitle className="text-lg">Resources</CardTitle>
-                <CardDescription>Manage blog posts and resource pages</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="space-y-6">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-base font-medium">Blog Posts</h3>
-                      <Button variant="outline" size="sm">
-                        View All Posts
-                      </Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Manage blog posts from the Posts and Editor tabs</p>
-                  </div>
+            <Tabs defaultValue="webinars" className="space-y-6">
+              <TabsList className="bg-card border shadow-sm">
+                <TabsTrigger value="webinars">Webinars</TabsTrigger>
+                <TabsTrigger value="guides">Guides</TabsTrigger>
+                <TabsTrigger value="case-studies">Case Studies</TabsTrigger>
+                <TabsTrigger value="standards">Standards</TabsTrigger>
+              </TabsList>
 
-                  <div className="border-t pt-6">
-                    <h3 className="text-base font-medium mb-4">Resource Pages</h3>
-                    <div className="space-y-3">
-                      {mockResourcePages.map((page) => (
-                        <div key={page.id} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-medium text-foreground">{page.title}</h4>
-                              <p className="text-sm text-muted-foreground mt-0.5">/{page.slug}</p>
-                            </div>
-                            <Button variant="outline" size="sm" className="hover:bg-primary/10 hover:text-primary hover:border-primary">
-                              Edit Content
-                            </Button>
-                          </div>
+              {/* Webinars Management */}
+              <TabsContent value="webinars" className="space-y-6">
+                <Card className="shadow-sm">
+                  <CardHeader className="border-b bg-muted/20">
+                    <CardTitle className="text-lg">Create New Webinar</CardTitle>
+                    <CardDescription>Add a new webinar event to your resources</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <form className="space-y-5">
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="webinar-title">Webinar Title</Label>
+                          <Input
+                            id="webinar-title"
+                            placeholder="e.g., Carbon Accounting 101"
+                            className="h-11"
+                          />
                         </div>
-                      ))}
+                        <div className="space-y-2">
+                          <Label htmlFor="webinar-date">Date & Time</Label>
+                          <Input
+                            id="webinar-date"
+                            type="datetime-local"
+                            className="h-11"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="webinar-speaker">Speaker Name</Label>
+                          <Input
+                            id="webinar-speaker"
+                            placeholder="e.g., Dr. Jane Smith"
+                            className="h-11"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="webinar-duration">Duration (minutes)</Label>
+                          <Input
+                            id="webinar-duration"
+                            type="number"
+                            placeholder="60"
+                            className="h-11"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="webinar-description">Description</Label>
+                        <Textarea
+                          id="webinar-description"
+                          placeholder="Describe what attendees will learn..."
+                          rows={4}
+                        />
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="webinar-url">Registration URL</Label>
+                          <Input
+                            id="webinar-url"
+                            type="url"
+                            placeholder="https://..."
+                            className="h-11"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="webinar-capacity">Max Capacity</Label>
+                          <Input
+                            id="webinar-capacity"
+                            type="number"
+                            placeholder="100"
+                            className="h-11"
+                          />
+                        </div>
+                      </div>
+
+                      <Button type="submit" className="w-full gap-2 h-11">
+                        <Plus className="h-4 w-4" />
+                        Create Webinar
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-sm">
+                  <CardHeader className="border-b bg-muted/20">
+                    <CardTitle className="text-lg">Upcoming Webinars</CardTitle>
+                    <CardDescription>Manage your scheduled webinar events</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No webinars scheduled yet</p>
+                      <p className="text-sm mt-2">Create your first webinar using the form above</p>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Other Resource Types */}
+              <TabsContent value="guides">
+                <Card className="shadow-sm">
+                  <CardHeader className="border-b bg-muted/20">
+                    <CardTitle className="text-lg">Guides Management</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>Guides management coming soon</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="case-studies">
+                <Card className="shadow-sm">
+                  <CardHeader className="border-b bg-muted/20">
+                    <CardTitle className="text-lg">Case Studies Management</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>Case studies management coming soon</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="standards">
+                <Card className="shadow-sm">
+                  <CardHeader className="border-b bg-muted/20">
+                    <CardTitle className="text-lg">Standards Management</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>Standards management coming soon</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
       </main>
