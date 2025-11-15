@@ -266,6 +266,60 @@ CREATE TABLE webinars (
 );
 
 -- ============================================
+-- GUIDES
+-- ============================================
+
+-- Guides table
+CREATE TABLE guides (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    content TEXT NOT NULL,
+    category VARCHAR(100),
+    author_id UUID REFERENCES admin_users(id) ON DELETE SET NULL,
+    author_name VARCHAR(255) NOT NULL,
+    is_published BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
+-- CASE STUDIES
+-- ============================================
+
+-- Case studies table
+CREATE TABLE case_studies (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
+    industry VARCHAR(100),
+    challenge TEXT NOT NULL,
+    solution TEXT NOT NULL,
+    results TEXT NOT NULL,
+    featured_image_url TEXT,
+    is_published BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
+-- STANDARDS
+-- ============================================
+
+-- Standards table
+CREATE TABLE standards (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    standard_name VARCHAR(255) NOT NULL,
+    organization VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    version VARCHAR(50),
+    official_link TEXT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
 -- PRICING & SUBSCRIPTIONS
 -- ============================================
 
@@ -371,6 +425,15 @@ CREATE TRIGGER update_support_tickets_updated_at BEFORE UPDATE ON support_ticket
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_webinars_updated_at BEFORE UPDATE ON webinars
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_guides_updated_at BEFORE UPDATE ON guides
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_case_studies_updated_at BEFORE UPDATE ON case_studies
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_standards_updated_at BEFORE UPDATE ON standards
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Update search vector for blog posts

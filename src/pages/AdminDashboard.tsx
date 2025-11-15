@@ -67,6 +67,48 @@ interface SupportTicket {
   response?: string;
 }
 
+interface Webinar {
+  id: string;
+  title: string;
+  date: string;
+  speaker: string;
+  duration: number;
+  description: string;
+  registrationUrl: string;
+  capacity: number;
+  status: "upcoming" | "completed";
+}
+
+interface Guide {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  category: string;
+  author: string;
+  date: string;
+}
+
+interface CaseStudy {
+  id: string;
+  title: string;
+  company: string;
+  industry: string;
+  challenge: string;
+  solution: string;
+  results: string;
+  date: string;
+}
+
+interface Standard {
+  id: string;
+  name: string;
+  organization: string;
+  description: string;
+  link: string;
+  version: string;
+}
+
 const mockPosts: BlogPost[] = [
   {
     id: "1",
@@ -127,6 +169,30 @@ const AdminDashboard = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState<AdminUser | null>(null);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  
+  // Company pages state
+  const [editingCompanyPage, setEditingCompanyPage] = useState<string | null>(null);
+  const [companyPageContent, setCompanyPageContent] = useState<{ [key: string]: string }>({});
+  
+  // Resources state
+  const [webinars, setWebinars] = useState<Webinar[]>([]);
+  const [guides, setGuides] = useState<Guide[]>([]);
+  const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
+  const [standards, setStandards] = useState<Standard[]>([]);
+  
+  // Forms state
+  const [webinarForm, setWebinarForm] = useState({
+    title: "", date: "", speaker: "", duration: "", description: "", registrationUrl: "", capacity: ""
+  });
+  const [guideForm, setGuideForm] = useState({
+    title: "", description: "", category: "", content: ""
+  });
+  const [caseStudyForm, setCaseStudyForm] = useState({
+    title: "", company: "", industry: "", challenge: "", solution: "", results: ""
+  });
+  const [standardForm, setStandardForm] = useState({
+    name: "", organization: "", description: "", link: "", version: ""
+  });
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [ticketResponse, setTicketResponse] = useState("");
 
@@ -260,6 +326,121 @@ const AdminDashboard = () => {
     setTicketResponse("");
     setSelectedTicket(null);
     toast.success("Response sent and ticket closed");
+  };
+
+  // Company page handlers
+  const handleSaveCompanyPage = (pageId: string, content: string) => {
+    const updatedContent = { ...companyPageContent, [pageId]: content };
+    setCompanyPageContent(updatedContent);
+    localStorage.setItem('companyPageContent', JSON.stringify(updatedContent));
+    setEditingCompanyPage(null);
+    toast.success("Page content saved successfully");
+  };
+
+  // Webinar handlers
+  const handleCreateWebinar = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newWebinar: Webinar = {
+      id: Date.now().toString(),
+      title: webinarForm.title,
+      date: webinarForm.date,
+      speaker: webinarForm.speaker,
+      duration: parseInt(webinarForm.duration),
+      description: webinarForm.description,
+      registrationUrl: webinarForm.registrationUrl,
+      capacity: parseInt(webinarForm.capacity),
+      status: "upcoming"
+    };
+    const updated = [...webinars, newWebinar];
+    setWebinars(updated);
+    localStorage.setItem('webinars', JSON.stringify(updated));
+    setWebinarForm({ title: "", date: "", speaker: "", duration: "", description: "", registrationUrl: "", capacity: "" });
+    toast.success("Webinar created successfully");
+  };
+
+  const handleDeleteWebinar = (id: string) => {
+    const updated = webinars.filter(w => w.id !== id);
+    setWebinars(updated);
+    localStorage.setItem('webinars', JSON.stringify(updated));
+    toast.success("Webinar deleted");
+  };
+
+  // Guide handlers
+  const handleCreateGuide = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newGuide: Guide = {
+      id: Date.now().toString(),
+      title: guideForm.title,
+      description: guideForm.description,
+      content: guideForm.content,
+      category: guideForm.category,
+      author: currentAdmin?.fullName || "Admin",
+      date: new Date().toISOString().split('T')[0]
+    };
+    const updated = [...guides, newGuide];
+    setGuides(updated);
+    localStorage.setItem('guides', JSON.stringify(updated));
+    setGuideForm({ title: "", description: "", category: "", content: "" });
+    toast.success("Guide created successfully");
+  };
+
+  const handleDeleteGuide = (id: string) => {
+    const updated = guides.filter(g => g.id !== id);
+    setGuides(updated);
+    localStorage.setItem('guides', JSON.stringify(updated));
+    toast.success("Guide deleted");
+  };
+
+  // Case Study handlers
+  const handleCreateCaseStudy = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newCaseStudy: CaseStudy = {
+      id: Date.now().toString(),
+      title: caseStudyForm.title,
+      company: caseStudyForm.company,
+      industry: caseStudyForm.industry,
+      challenge: caseStudyForm.challenge,
+      solution: caseStudyForm.solution,
+      results: caseStudyForm.results,
+      date: new Date().toISOString().split('T')[0]
+    };
+    const updated = [...caseStudies, newCaseStudy];
+    setCaseStudies(updated);
+    localStorage.setItem('caseStudies', JSON.stringify(updated));
+    setCaseStudyForm({ title: "", company: "", industry: "", challenge: "", solution: "", results: "" });
+    toast.success("Case study created successfully");
+  };
+
+  const handleDeleteCaseStudy = (id: string) => {
+    const updated = caseStudies.filter(c => c.id !== id);
+    setCaseStudies(updated);
+    localStorage.setItem('caseStudies', JSON.stringify(updated));
+    toast.success("Case study deleted");
+  };
+
+  // Standard handlers
+  const handleCreateStandard = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newStandard: Standard = {
+      id: Date.now().toString(),
+      name: standardForm.name,
+      organization: standardForm.organization,
+      description: standardForm.description,
+      link: standardForm.link,
+      version: standardForm.version
+    };
+    const updated = [...standards, newStandard];
+    setStandards(updated);
+    localStorage.setItem('standards', JSON.stringify(updated));
+    setStandardForm({ name: "", organization: "", description: "", link: "", version: "" });
+    toast.success("Standard created successfully");
+  };
+
+  const handleDeleteStandard = (id: string) => {
+    const updated = standards.filter(s => s.id !== id);
+    setStandards(updated);
+    localStorage.setItem('standards', JSON.stringify(updated));
+    toast.success("Standard deleted");
   };
 
   const mockStats = {
@@ -693,29 +874,66 @@ const AdminDashboard = () => {
 
           {/* Company Tab */}
           <TabsContent value="company" className="space-y-6">
-            <Card className="shadow-sm">
-              <CardHeader className="border-b bg-muted/20">
-                <CardTitle className="text-lg">Company Pages</CardTitle>
-                <CardDescription>Manage content for company-related pages</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  {mockCompanyPages.map((page) => (
-                    <div key={page.id} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-foreground">{page.title}</h3>
-                          <p className="text-sm text-muted-foreground mt-0.5">/{page.slug}</p>
+            {editingCompanyPage ? (
+              <Card className="shadow-sm">
+                <CardHeader className="border-b bg-muted/20">
+                  <CardTitle className="text-lg">
+                    Edit {mockCompanyPages.find(p => p.id === editingCompanyPage)?.title}
+                  </CardTitle>
+                  <CardDescription>Update the content for this page</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                  <RichTextEditor
+                    value={companyPageContent[editingCompanyPage] || ""}
+                    onChange={(value) => setCompanyPageContent({ ...companyPageContent, [editingCompanyPage]: value })}
+                  />
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={() => handleSaveCompanyPage(editingCompanyPage, companyPageContent[editingCompanyPage] || "")}
+                      className="gap-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      Save Content
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setEditingCompanyPage(null)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-sm">
+                <CardHeader className="border-b bg-muted/20">
+                  <CardTitle className="text-lg">Company Pages</CardTitle>
+                  <CardDescription>Manage content for company-related pages</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    {mockCompanyPages.map((page) => (
+                      <div key={page.id} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-medium text-foreground">{page.title}</h3>
+                            <p className="text-sm text-muted-foreground mt-0.5">/{page.slug}</p>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setEditingCompanyPage(page.id)}
+                            className="hover:bg-primary/10 hover:text-primary hover:border-primary"
+                          >
+                            Edit Content
+                          </Button>
                         </div>
-                        <Button variant="outline" size="sm" className="hover:bg-primary/10 hover:text-primary hover:border-primary">
-                          Edit Content
-                        </Button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Support Tickets Tab */}
@@ -952,45 +1170,360 @@ const AdminDashboard = () => {
                 </Card>
               </TabsContent>
 
-              {/* Other Resource Types */}
-              <TabsContent value="guides">
+              {/* Guides Management */}
+              <TabsContent value="guides" className="space-y-6">
                 <Card className="shadow-sm">
                   <CardHeader className="border-b bg-muted/20">
-                    <CardTitle className="text-lg">Guides Management</CardTitle>
+                    <CardTitle className="text-lg">Create New Guide</CardTitle>
+                    <CardDescription>Add a comprehensive guide to your resources</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
-                    <div className="text-center py-12 text-muted-foreground">
-                      <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p>Guides management coming soon</p>
-                    </div>
+                    <form onSubmit={handleCreateGuide} className="space-y-5">
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="guide-title">Guide Title</Label>
+                          <Input
+                            id="guide-title"
+                            placeholder="e.g., Complete Carbon Reduction Guide"
+                            value={guideForm.title}
+                            onChange={(e) => setGuideForm({ ...guideForm, title: e.target.value })}
+                            required
+                            className="h-11"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="guide-category">Category</Label>
+                          <Input
+                            id="guide-category"
+                            placeholder="e.g., Getting Started"
+                            value={guideForm.category}
+                            onChange={(e) => setGuideForm({ ...guideForm, category: e.target.value })}
+                            required
+                            className="h-11"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="guide-description">Description</Label>
+                        <Textarea
+                          id="guide-description"
+                          placeholder="Brief overview of the guide..."
+                          value={guideForm.description}
+                          onChange={(e) => setGuideForm({ ...guideForm, description: e.target.value })}
+                          required
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="guide-content">Content</Label>
+                        <Textarea
+                          id="guide-content"
+                          placeholder="Full guide content..."
+                          value={guideForm.content}
+                          onChange={(e) => setGuideForm({ ...guideForm, content: e.target.value })}
+                          required
+                          rows={8}
+                        />
+                      </div>
+
+                      <Button type="submit" className="w-full gap-2 h-11">
+                        <Plus className="h-4 w-4" />
+                        Create Guide
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-sm">
+                  <CardHeader className="border-b bg-muted/20">
+                    <CardTitle className="text-lg">Published Guides</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    {guides.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                        <p>No guides published yet</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {guides.map((guide) => (
+                          <div key={guide.id} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="font-medium text-foreground mb-1">{guide.title}</h3>
+                                <p className="text-sm text-muted-foreground mb-2">{guide.description}</p>
+                                <div className="flex gap-4 text-xs text-muted-foreground">
+                                  <span>Category: {guide.category}</span>
+                                  <span>Author: {guide.author}</span>
+                                  <span>Date: {guide.date}</span>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteGuide(guide.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              <TabsContent value="case-studies">
+              {/* Case Studies Management */}
+              <TabsContent value="case-studies" className="space-y-6">
                 <Card className="shadow-sm">
                   <CardHeader className="border-b bg-muted/20">
-                    <CardTitle className="text-lg">Case Studies Management</CardTitle>
+                    <CardTitle className="text-lg">Create New Case Study</CardTitle>
+                    <CardDescription>Document a success story</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
-                    <div className="text-center py-12 text-muted-foreground">
-                      <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p>Case studies management coming soon</p>
-                    </div>
+                    <form onSubmit={handleCreateCaseStudy} className="space-y-5">
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="case-title">Case Study Title</Label>
+                          <Input
+                            id="case-title"
+                            placeholder="e.g., TechCorp's Journey to Net Zero"
+                            value={caseStudyForm.title}
+                            onChange={(e) => setCaseStudyForm({ ...caseStudyForm, title: e.target.value })}
+                            required
+                            className="h-11"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="case-company">Company Name</Label>
+                          <Input
+                            id="case-company"
+                            placeholder="e.g., TechCorp Inc."
+                            value={caseStudyForm.company}
+                            onChange={(e) => setCaseStudyForm({ ...caseStudyForm, company: e.target.value })}
+                            required
+                            className="h-11"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="case-industry">Industry</Label>
+                        <Input
+                          id="case-industry"
+                          placeholder="e.g., Technology"
+                          value={caseStudyForm.industry}
+                          onChange={(e) => setCaseStudyForm({ ...caseStudyForm, industry: e.target.value })}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="case-challenge">Challenge</Label>
+                        <Textarea
+                          id="case-challenge"
+                          placeholder="What challenges did they face?..."
+                          value={caseStudyForm.challenge}
+                          onChange={(e) => setCaseStudyForm({ ...caseStudyForm, challenge: e.target.value })}
+                          required
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="case-solution">Solution</Label>
+                        <Textarea
+                          id="case-solution"
+                          placeholder="How did they address it?..."
+                          value={caseStudyForm.solution}
+                          onChange={(e) => setCaseStudyForm({ ...caseStudyForm, solution: e.target.value })}
+                          required
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="case-results">Results</Label>
+                        <Textarea
+                          id="case-results"
+                          placeholder="What outcomes were achieved?..."
+                          value={caseStudyForm.results}
+                          onChange={(e) => setCaseStudyForm({ ...caseStudyForm, results: e.target.value })}
+                          required
+                          rows={3}
+                        />
+                      </div>
+
+                      <Button type="submit" className="w-full gap-2 h-11">
+                        <Plus className="h-4 w-4" />
+                        Create Case Study
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-sm">
+                  <CardHeader className="border-b bg-muted/20">
+                    <CardTitle className="text-lg">Published Case Studies</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    {caseStudies.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                        <p>No case studies published yet</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {caseStudies.map((caseStudy) => (
+                          <div key={caseStudy.id} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="font-medium text-foreground mb-1">{caseStudy.title}</h3>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  {caseStudy.company} - {caseStudy.industry}
+                                </p>
+                                <div className="text-xs text-muted-foreground">
+                                  Published: {caseStudy.date}
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteCaseStudy(caseStudy.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              <TabsContent value="standards">
+              {/* Standards Management */}
+              <TabsContent value="standards" className="space-y-6">
                 <Card className="shadow-sm">
                   <CardHeader className="border-b bg-muted/20">
-                    <CardTitle className="text-lg">Standards Management</CardTitle>
+                    <CardTitle className="text-lg">Add New Standard</CardTitle>
+                    <CardDescription>Document a compliance standard or framework</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
-                    <div className="text-center py-12 text-muted-foreground">
-                      <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p>Standards management coming soon</p>
-                    </div>
+                    <form onSubmit={handleCreateStandard} className="space-y-5">
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="standard-name">Standard Name</Label>
+                          <Input
+                            id="standard-name"
+                            placeholder="e.g., GHG Protocol"
+                            value={standardForm.name}
+                            onChange={(e) => setStandardForm({ ...standardForm, name: e.target.value })}
+                            required
+                            className="h-11"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="standard-org">Organization</Label>
+                          <Input
+                            id="standard-org"
+                            placeholder="e.g., WBCSD & WRI"
+                            value={standardForm.organization}
+                            onChange={(e) => setStandardForm({ ...standardForm, organization: e.target.value })}
+                            required
+                            className="h-11"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="standard-version">Version</Label>
+                          <Input
+                            id="standard-version"
+                            placeholder="e.g., v1.0"
+                            value={standardForm.version}
+                            onChange={(e) => setStandardForm({ ...standardForm, version: e.target.value })}
+                            required
+                            className="h-11"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="standard-link">Official Link</Label>
+                          <Input
+                            id="standard-link"
+                            type="url"
+                            placeholder="https://..."
+                            value={standardForm.link}
+                            onChange={(e) => setStandardForm({ ...standardForm, link: e.target.value })}
+                            required
+                            className="h-11"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="standard-description">Description</Label>
+                        <Textarea
+                          id="standard-description"
+                          placeholder="Brief description of the standard..."
+                          value={standardForm.description}
+                          onChange={(e) => setStandardForm({ ...standardForm, description: e.target.value })}
+                          required
+                          rows={4}
+                        />
+                      </div>
+
+                      <Button type="submit" className="w-full gap-2 h-11">
+                        <Plus className="h-4 w-4" />
+                        Add Standard
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-sm">
+                  <CardHeader className="border-b bg-muted/20">
+                    <CardTitle className="text-lg">Published Standards</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    {standards.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                        <p>No standards documented yet</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {standards.map((standard) => (
+                          <div key={standard.id} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="font-medium text-foreground mb-1">{standard.name}</h3>
+                                <p className="text-sm text-muted-foreground mb-2">{standard.description}</p>
+                                <div className="flex gap-4 text-xs text-muted-foreground">
+                                  <span>Organization: {standard.organization}</span>
+                                  <span>Version: {standard.version}</span>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteStandard(standard.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
